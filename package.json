@@ -1,0 +1,74 @@
+{
+	"name": "note-lang",
+	"displayName": "Note Lang",
+	"description": "Coloration, liens entre titres, complétion, plan du fichier et snippets pour la notation Note (.note, .cours)",
+	"version": "1.0.0",
+	"publisher": "sagittarius-9",
+	"author": "Sagittarius_9",
+	"license": "SEE LICENSE IN LICENSE",
+	"engines": {
+		"vscode": "^1.75.0"
+	},
+
+	"categories": [
+		"Programming Languages",
+		"Snippets"
+	],
+
+	"keywords": [
+		"note",
+		"notes",
+		"cours",
+		"prise de notes",
+		"notation"
+	],
+
+	"main": "./extension.js",
+	"activationEvents": [
+		"onLanguage:note",
+		"onCommand:noteLang.generateClassConstructor"
+	],
+
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		}
+	},
+
+	"contributes": {
+		"commands": [
+			{
+				"command": "noteLang.generateClassConstructor",
+				"title": "Note Lang: Générer classe + constructeur depuis une liste d'attributs"
+			}
+		],
+		"configurationDefaults": {
+			"[note]": {
+				"editor.guides.bracketPairs": true,
+				"editor.guides.bracketPairsHorizontal": false,
+				"editor.guides.indentation": true
+			}
+		},
+		"languages": [
+			{
+				"id": "note",
+				"aliases": [ "Note", "note", "cours" ],
+				"extensions": [ ".note", ".cours"],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "note",
+				"scopeName": "source.note",
+				"path": "./syntaxes/note.tmLanguage.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "note",
+				"path": "./snippets/note.code-snippets"
+			}
+		]
+	}
+}

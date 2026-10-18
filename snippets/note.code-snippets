@@ -1,0 +1,184 @@
+{
+	"Structure block": {
+		"prefix": "[titre]()",
+		"body": [
+			"[ ${1:Titre} ](",
+			"\t$0",
+			")"
+		],
+		"description": "Bloc de structure [ Titre ]( ... )"
+	},
+	"Structure block (numbered)": {
+		"prefix": "[n : titre]()",
+		"body": [
+			"[ ${1:1} : ${2:Titre} ](",
+			"\t$0",
+			")"
+		],
+		"description": "Bloc de structure (numéroté) [ n : Titre ]( ... )"
+	},
+	"Info list block": {
+		"prefix": "<titre>()",
+		"body": [
+			"< ${1:Titre} >(",
+			"\t$0",
+			")"
+		],
+		"description": "Bloc de liste d'informations < Titre >( ... )"
+	},
+	"Info list block (numbered)": {
+		"prefix": "<n : titre>()",
+		"body": [
+			"< ${1:1} : ${2:Titre} >(",
+			"\t$0",
+			")"
+		],
+		"description": "Bloc de liste d'informations (numéroté) < n : Titre >( ... )"
+	},
+	"Vocabulary": {
+		"prefix": "+ vocab",
+		"body": "+ ${1:Terme} : ${2:Définition}",
+		"description": "+ Vocabulaire"
+	},
+	"Entity": {
+		"prefix": "+ entity",
+		"body": "+ ${1:Entité} : (${2:champ1}, ${3:champ2})",
+		"description": "+ Entité : nom + ses champs"
+	},
+	"Info bullet": {
+		"prefix": "- info",
+		"body": "- \"${1:info}\"",
+		"description": "Ligne d'information"
+	},
+	"Key value": {
+		"prefix": "- clé : valeur",
+		"body": "- ${1:clé} : ${2:valeur}",
+		"description": "Info de la forme clé : valeur"
+	},
+	"détail": {
+		"prefix": "; détail",
+		"body": "; \"${1:détail}\"",
+		"description": "détail"
+	},
+	"Example": {
+		"prefix": "* exemple",
+		"body": "* \"${1:exemple}\"",
+		"description": "Exemple concret"
+	},
+	"Info with detail": {
+		"prefix": "- info ; détail",
+		"body": "- \"${1:info}\" ; \"${2:détail}\"",
+		"description": "Information suivie d'un détail"
+	},
+	"Info with exemple": {
+		"prefix": "- info * exemple",
+		"body": "- \"${1:info}\" * \"${2:exemple}\"",
+		"description": "Information suivie d'un exemple"
+	},
+	"Info with remark": {
+		"prefix": "- info & remarque",
+		"body": "- \"${1:info}\" & \"${2:remarque}\"",
+		"description": "Information suivie d'une remarque"
+	},
+	"Definition": {
+		"prefix": ": définition",
+		"body": ": ${1:définition}",
+		"description": "Définition"
+	},
+	"Remark": {
+		"prefix": "& remarque",
+		"body": "& \"${1:remarque}\"",
+		"description": "Remarque / « et aussi »"
+	},
+	"source": {
+		"prefix": "# source",
+		"body": "# \"${1:source}\"",
+		"description": "Source / référence"
+	},
+	"subtitle / context": {
+		"prefix": "§ contexte",
+		"body": "§ \"${1:contexte}\"",
+		"description": "Sous-titre / contexte"
+	},
+	"Development block": {
+		"prefix": "-> dev",
+		"body": [
+			"${1:Label} ->",
+			"\t- \"${2:développement}\""
+		],
+		"description": "Label suivi de son développement indenté"
+	},
+	"Liaison": {
+		"prefix": "+>",
+		"body": "+> ${1:suite}",
+		"description": "Retour à l'élément précédent (referme le plus interne et reprend le précédent)"
+	},
+	"Mention": {
+		"prefix": "@ mention",
+		"body": "@ \"${1:mention}\"",
+		"description": "mention d'une entité ou chose externe"
+	},
+	"unreliable": {
+		"prefix": "~~ non fiable",
+		"body": "~~ \"${1:info}\"",
+		"description": "Info non fiable ou manquante"
+	},
+	"Uncertain": {
+		"prefix": "~ incertain",
+		"body": "~${1:incertain}",
+		"description": "Élément incertain (collé au texte)"
+	},
+	"Important": {
+		"prefix": "° important",
+		"body": "°${1:important}",
+		"description": "Élément important (collé au texte ou à un bloc : °-)"
+	},
+	"Required": {
+		"prefix": "^ obligatoire",
+		"body": "^${1:obligatoire}",
+		"description": "Élément obligatoire / imposé, souligné (collé au texte ou à un bloc : ^-)"
+	},
+	"Exception": {
+		"prefix": "! exception",
+		"body": "!${1:exception}",
+		"description": "Exception, italique (collé au texte ou à un bloc : !-)"
+	},
+	"Ignored": {
+		"prefix": "| ignoré",
+		"body": "|${1:-} ${2:élément ignoré}",
+		"description": "Élément ignoré / inutile (| collé à un symbole, ou ||)"
+	},
+	"Done": {
+		"prefix": "=> terminé",
+		"body": "=> \"${1:tâche}\"",
+		"description": "Terminé"
+	},
+	"Started": {
+		"prefix": "> commencé",
+		"body": "> \"${1:tâche}\"",
+		"description": "Commencé"
+	},
+	"New": {
+		"prefix": ":> nouveauté",
+		"body": ":> \"${1:info}\"",
+		"description": "Nouveauté"
+	},
+	"Deleted": {
+		"prefix": "/> supprimé",
+		"body": "/> \"${1:info}\"",
+		"description": "Supprimé"
+	},
+	"Table": {
+		"prefix": "/. table ./",
+		"body": [
+			"/.            ${1:Titre du tableau}",
+			"\t+----------------+----------------+",
+			"\t| ${2:col1}      | ${3:col2}      |",
+			"\t+----------------+----------------+",
+			"\t| ${4:val1}      | ${5:val2}      |",
+			"\t+----------------+----------------+",
+			"./"
+		],
+		"description": "Bloc tableau /. ... ./"
+	}
+}

@@ -1,0 +1,469 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Note",
+	"scopeName": "source.note",
+
+	"patterns": [
+		{ "include": "#file-title"        },
+		{ "include": "#comments"          },
+		{ "include": "#brackets"          },
+		{ "include": "#specific-format"   },
+		{ "include": "#koma"              },
+		{ "include": "#strings"           },
+		{ "include": "#return"            },
+		{ "include": "#number"            },
+		{ "include": "#vocab-entity"      },
+		{ "include": "#development"       },
+		{ "include": "#dots"              },
+		{ "include": "#unreliable"        },
+		{ "include": "#info-bullet"       },
+		{ "include": "#definition"        },
+		{ "include": "#detail"            },
+		{ "include": "#notice"            },
+		{ "include": "#source"            },
+		{ "include": "#example"           },
+		{ "include": "#context"           },
+		{ "include": "#status-tag"        },
+		{ "include": "#equality"          },
+		{ "include": "#exeption"          },
+		{ "include": "#incertain"         },
+		{ "include": "#important"         },
+	  	{ "include": "#required"          },
+		{ "include": "#ignored"           },
+		{ "include": "#space-connector"   },
+		{ "include": "#done"              },
+		{ "include": "#started"           },
+		{ "include": "#new"               },
+		{ "include": "#deleted"           }
+	],
+
+	"repository": {
+		"comments": {
+			"patterns": [
+				{ "name": "comment.line.double-slash.note", "match": "//.*$"   },
+				{ "name": "comment.block.note", "begin": "/\\*", "end": "\\*/" }
+			]
+		},
+
+		"attrs": {
+			"comment": "elements qui s'imbriquent dans le precedent (: ; * & #). Un +> referme le plus interne (element ou marqueur ~ ^ ° !) et reprend le precedent : - info * ex ; det +> suite ex +> suite info",
+			"patterns": [ 
+				{ "include": "#definition"   },
+				{ "include": "#detail"       },
+				{ "include": "#example"      },
+				{ "include": "#notice"       },
+				{ "include": "#source"       },
+				{ "include": "#status-tag"   }
+
+			]
+			},
+
+		"file-title": {
+			"begin": "^([^\\W\\d]\\w*(?:-\\w+)*)(?=(?:\\.\\w+(?:-\\w+)*)*(?:\\s*\\{|\\s*$))",
+			"beginCaptures": { "1": { "name": "markup.inserted.title.note" } },
+			"end": "(?=\\s*\\{|\\s*$)",
+			"contentName": "markup.inserted.title.note",
+			"patterns": [ { "match": "\\.", "name": "keyword.symbol.note" } ]
+		},
+
+		"strings": {
+			"begin": "\"",
+			"end": "\"",
+			"name": "string.quoted.double.note",
+			"patterns": [
+				{ "match": "\\\\.", "name": "constant.character.escape.note" }
+			]
+		},
+
+		"brackets": {
+			"patterns": [
+				{
+					"begin": "\\[",
+					"beginCaptures": { "0": { "name": "keyword.symbol.begin.note" } },
+					"end": "\\]",
+					"endCaptures": { "0": { "name": "keyword.symbol.end.note" } },
+					"name": "entity.name.section.note",
+					"patterns": [
+						{ "match": ":", "name": "keyword.operator.note"        },
+						{ "match": "[,_]", "name": "markup.inline.raw.note"    },
+						{ "match": "[^>]*(?=:)", "name": "markup.heading.note" },
+						{ "include": "#dots"                                   }
+					]
+				},
+				{
+					"begin": "<",
+					"beginCaptures": { "0": { "name": "keyword.symbol.begin.note" } },
+					"end": ">",
+					"endCaptures": { "0": { "name": "keyword.symbol.end.note" } },
+					"name": "entity.name.type.note",
+					"patterns": [
+						{ "match": ":", "name": "keyword.operator.note"        },
+						{ "match": "[,_]", "name": "markup.inline.raw.note"    },
+						{ "match": "[^>]*(?=:)", "name": "markup.heading.note" },
+						{ "include": "#dots"                                   }
+					]
+				}
+			]
+		},
+
+		"development": {
+			"comment": "Label -> at end of line: the indented block below develops/contains Label",
+			"match": "->",
+			"name": "keyword.control.reference.note"
+		},
+
+		"done": {
+			"begin": "=>",
+			"beginCaptures": { "0": { "name": "markup.inserted.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "markup.inserted.note",
+			"patterns": [
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end":"\"", "name": "markup.inserted.note"  },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+		"started": {
+			"begin": ">",
+			"beginCaptures": { "0": { "name": "markup.changed.started.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "markup.changed.started.note",
+			"patterns": [
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"       },
+				{ "begin": "\"", "end":"\"", "name": "markup.changed.started.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+		"new": {
+			"begin": ":>",
+			"beginCaptures": { "0": { "name": "markup.bold.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "markup.bold.note",
+			"patterns": [
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end":"\"", "name": "markup.bold.note"      },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+		"deleted": {
+			"begin": "/>",
+			"beginCaptures": { "0": { "name": "constant.character.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "constant.character.note",
+			"patterns": [
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"   },
+				{ "begin": "\"", "end":"\"", "name": "constant.character.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"dots": {
+			"patterns": [
+				{ "match": "\\.\\.\\.", "name": "invalid.note" },
+				{ "match": "\\.\\.(?!\\.)", "name": "keyword.control.note" }
+			]
+		},
+
+		"koma": {
+			"match": ",",
+			"name": "string.interpolated.note"
+		},
+
+		"return": {
+			"match": "\\+>",
+			"name": "markup.inline.raw.note"
+		},
+		
+		"unreliable": {
+			"begin": "~~",
+			"beginCaptures": { "0": { "name": "invalid.deprecated.unreliable.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "invalid.deprecated.unreliable.note",
+			"patterns": [
+				{ "match": "([\\(\\),_]|\\+>)", "name": "invalid.deprecated.unreliable.note" },
+				{ "begin": "\"", "end":"\"", "name": "invalid.deprecated.unreliable.note"    },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"vocab-entity": {
+			"comment": "+ Terme : Définition -> ( ) et , n'héritent pas de la couleur de la définition",
+			"begin": "\\+",
+			"beginCaptures": { "0": { "name": "keyword.control.info.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|\\+>|$)",
+			"name": "invalid.note",
+			"patterns": [ 
+				{ "match": "([,_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end":"\"", "name": "invalid.note"        },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"info-bullet": {
+			"begin": "(?<![^\\s!°^~])-",
+			"beginCaptures": { "0": { "name": "keyword.control.info.note" } },
+			"end": "(\\+>)|(?=[§|<\\[]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|:>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "entity.other.attribute-name.info.note",
+			"patterns": [
+				{ "include": "#attrs" },
+				{ "match": "([,_]|\\+>)", "name": "markup.inline.raw.note"                   },
+				{ "begin": "\"", "end":"\"", "name": "entity.other.attribute-name.info.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"definition": {
+			"begin": ":(?!>)",
+			"beginCaptures": { "0": { "name": "keyword.operator.note" } },
+			"end": "(\\+>)|(?=[§|<\\[]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|:>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "entity.name.type.note",
+			"patterns": [
+				{ "include": "#attrs" },
+				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end":"\"", "name": "entity.name.type.note"     },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"detail": {
+			"begin": ";",
+			"beginCaptures": { "0": { "name": "keyword.control.detail.note" } },
+			"end": "(\\+>)|(?=[§|<\\[]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|:>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "storage.modifier.detail.note",
+			"patterns": [
+				{ "include": "#attrs" },
+				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"    },
+				{ "begin": "\"", "end":"\"", "name": "storage.modifier.detail.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"notice": {
+			"begin": "&",
+			"beginCaptures": { "0": { "name": "support.function.notice.note" } },
+			"end": "(\\+>)|(?=[§|<\\[]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|:>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "support.function.notice.note",
+			"patterns": [
+				{ "include": "#attrs" },
+				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"    },
+				{ "begin": "\"", "end":"\"", "name": "support.function.notice.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"example": {
+			"begin": "\\*",
+			"beginCaptures": { "0": { "name": "keyword.other.unit.example.note" } },
+			"end": "(\\+>)|(?=[§|<\\[]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|:>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "keyword.other.unit.example.note",
+			"patterns": [
+				{ "include": "#attrs" },
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"           },
+				{ "begin": "\"", "end":"\"", "name": "keyword.other.unit.example.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"incertain": {
+			"begin": "~",
+			"beginCaptures": { "0": { "name": "constant.character.escape.note" } },
+			"end": "(?<!~)\\s*(\\+>)|(?<!~)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"contentName": "constant.character.escape.note",
+			"patterns": [
+				{ "begin": "\"", "end": "\"", "name": "constant.character.escape.note" },
+				{ "begin": "\\(", "end": "\\)", "name": "constant.character.escape.note",
+				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+				{ "match": "\\d+|=(?!>)" },
+				{ "include": "$self" }
+			]
+		},
+
+		"required": {
+			"begin": "\\^",
+			"beginCaptures": { "0": { "name": "header.exeption.note" } },
+			"end": "(?<!\\^)\\s*(\\+>)|(?<!\\^)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"contentName": "markup.underline.exeption.note",
+			"patterns": [
+				{ "begin": "\"", "end": "\"", "name": "markup.underline.exeption.note" },
+				{ "begin": "\\(", "end": "\\)", "name": "markup.underline.exeption.note",
+				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+				{ "match": "\\d+|=(?!>)" },
+				{ "include": "$self" }
+			]
+		},
+
+		"important": {
+			"begin": "°",
+			"beginCaptures": { "0": { "name": "header.important.note" } },
+			"end": "(?<!°)\\s*(\\+>)|(?<!°)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"contentName": "strong.important.note",
+			"patterns": [
+				{ "begin": "\"", "end": "\"",	"name": "strong.important.note" },
+				{ "begin": "\\(", "end": "\\)", "name": "strong.important.note",
+				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+				{ "match": "\\d+|=(?!>)" },
+				{ "include": "$self" }
+			]
+		},
+		
+		"exeption": {
+			"comment": "! au debut italicise tout ce qui suit jusqu'a fin de ligne, en gardant les couleurs des symboles imbriques (#, -, +, etc.)",
+			"begin": "!",
+			"beginCaptures": { "0": { "name": "markup.bold.exeption.note" } },
+			"end": "(?<!!)\\s*(\\+>)|(?<!!)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"contentName": "emphasis.exeption.note",
+			"patterns": [
+				{ "begin": "\"", "end": "\"", "name": "emphasis.exeption.note" },
+				{ "begin": "\\(", "end": "\\)", "name": "emphasis.exeption.note",
+					"patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"}, { "include": "#dots" } ] },
+				{ "match": "\\d+|=(?!>)" },
+				{ "include": "$self" }
+			]
+		},
+
+		"source": {
+			"begin": "#",
+			"beginCaptures": { "0": { "name": "entity.name.function.note" } },
+			"end": "(\\+>)|(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "entity.name.function.note",
+			"patterns": [
+				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end":"\"", "name": "entity.name.function.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"context": {
+			"begin": "§",
+			"beginCaptures": { "0": { "name": "markup.bold.note" } },
+			"end": "(\\+>)|(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "markup.bold.note",
+			"patterns": [
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end":"\"", "name": "markup.bold.note"      },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"status-tag": {
+			"begin": "@",
+			"beginCaptures": { "0": { "name": "entity.name.tag.status.note" } },
+			"end": "(\\+>)|(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+			"name": "entity.name.tag.status.note",
+			"patterns": [
+				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"       },
+				{ "begin": "\"", "end":"\"", "name": "entity.name.tag.status.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+
+		"equality": {
+			"match": "=(?!>)",
+			"name": "keyword.operator.equality.note"
+		},
+
+		"ignored": {
+			"begin": "(\\|)(?:(\\|)|(?:[-:*;§@!~/#]|\\+(?!>)))",
+			"beginCaptures": { "1": { "name": "constant.regexp.note" }, "2": { "name": "constant.regexp.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "emphasis.lost.note",
+			"patterns": [
+				{ "begin": "\"", "end":"\"", "name": "emphasis.lost.note" },
+				{ "include": "#dots" }
+			]
+		},
+
+		"specific-format": {
+			"begin": "/\\.",
+			"beginCaptures": { "0": { "name": "constant.regexp.note" } },
+			"end": "\\./",
+			"endCaptures": { "0": { "name": "constant.regexp.note" } },
+			"name": "meta.preprocessor.string.note"
+		},
+
+		"space-connector": {
+			"match": "_", "name": "markup.inline.raw.note"
+		},
+
+		"number": {
+			"patterns": [
+				{
+					"match": "(\\d+(?!\\.)(h|min|s|€|\\$|£|%)*)",
+					"name": "constant.numeric.integer.note"
+				},
+				{
+					"match": "(\\d+\\.\\d+(h|min|s|€|\\$|£|%)*)",
+					"name": "constant.numeric.float.note"
+				}
+			]
+		}
+	}
+}
