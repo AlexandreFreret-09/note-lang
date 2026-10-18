@@ -163,6 +163,5 @@ Deux réglages utiles à connaître :
 ## Limites connues
 
 - Les liens, la complétion et les mentions entre fichiers demandent d'avoir ouvert le dossier.
-- Un `/.` jamais refermé masque le reste du fichier pour les liens, jusqu'au `./` (comme pour la coloration).
 - Les noms de blocs contenant une virgule ou un `/` ne sont pas proposés à la complétion.
 - Le contenu des tableaux `/. ./` et des commentaires `/* */` est ignoré pour les liens et les entités.
