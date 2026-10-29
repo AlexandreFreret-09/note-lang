@@ -67,7 +67,6 @@ Les éléments non composés n'imbriquent aucun élément.
 ```
 - info * exemple ; détail +> suite de l'exemple +> suite de l'info
 ```
-
 Ici « suite de l'exemple » reprend la couleur de l'exemple, puis « suite de l'info » celle de l'info.
 
 ## Guillemets
@@ -77,7 +76,6 @@ Le contenu d'un élément peut être mis entre guillemets, ce qui échappe tous 
 ```
 - "adresse.mail@gmail.com"
 ```
-
 Ils permettent également de prolonger le texte sur plusieurs lignes :
 
 ```
@@ -91,10 +89,9 @@ Alternative sans échappement du texte :
   "— Ludwig Wittgenstein
 ```
 
-## Titres de bloc
+## Titres
 
 Un bloc de premier niveau s'écrit `nomDuFichier.suite { … }`, collé à gauche, avec le `{` sur la même ligne ou sur la suivante :
-
 ```
 nom.cours.1 {
 	[ 1 : Présentation ](
@@ -102,8 +99,7 @@ nom.cours.1 {
 	)
 }
 ```
-
-Le premier mot doit être **le nom du fichier sans sa dernière extension** : dans `nom.cours`, `nom.cours.1 {` ou `nom {` sont valides, `Cours.1 {` donne un avertissement. Un fichier peut contenir plusieurs blocs (ex : `nom.cours.1 { … }` puis `nom.cours.2 { … }`).
+Le premier mot doit être **le nom du fichier sans sa dernière extension** : Un fichier `nom.cours` peut contenir `nom.cours.1 {` ou `nom {`, `Cours.1 {` donne un avertissement. Un fichier peut contenir plusieurs blocs (ex : `nom.cours.1 { … }` puis `nom.cours.2 { … }`).
 
 ## Liens : `#`
 

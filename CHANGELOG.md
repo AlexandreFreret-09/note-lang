@@ -1,6 +1,11 @@
 # Journal des changements
 
-## 1.0.0 — première version
+## 1.1.0 — 2026-10-29
+
+- Nouveau symbole de statut `>>` : tâche à faire en continu, avec son snippet `>> en continu`.
+- Erreur quand du texte est placé hors d’un bloc titre
+
+## 1.0.0 — 2026-10-18 — première version
 
 - Coloration complète de la notation (`.note`, `.cours`) : structure `[ ]` et `< >`, éléments `+ - : * & ; # §`, marqueurs `~ ° ^ ! |`, statuts `=> > :> />`, tableaux `/. ./`, commentaires.
 - Imbrication des éléments : `+>` referme le plus interne et reprend l'élément précédent.
