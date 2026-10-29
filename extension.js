@@ -71,6 +71,41 @@ function checkTitles(lines, baseName) {
 	return out;
 }
 
+// garde-fou : tout le texte doit être dans un bloc titre « nomDuFichier.suite { … } », fermé par un } collé à gauche.
+// Renvoie une erreur par « étendue » de texte hors bloc (au 1er texte de l'étendue), pas une par ligne.
+function checkOutsideBlocks(rawLines, lines, baseName) {
+	const titleLines = new Set(findTitles(lines).map((t) => t.line));
+	const stripComment = (s) => {                                    // texte sans le commentaire // (hors guillemets)
+		let q = false;
+		for (let i = 0; i < s.length; i++) {
+			if (s[i] === '"') q = !q;
+			else if (!q && s[i] === '/' && s[i + 1] === '/') return s.slice(0, i);
+		}
+		return s;
+	};
+	const out = [];
+	let inBlock = false, run = null;
+	const flush = () => { if (run) { out.push(run); run = null; } };
+	for (let i = 0; i < lines.length; i++) {
+		if (titleLines.has(i)) { inBlock = true; flush(); continue; }   // un titre ouvre un bloc (son { peut être sur la ligne suivante)
+		if (inBlock) { if (/^\}\s*$/.test(lines[i])) inBlock = false; continue; }
+		const trimmed = stripComment(lines[i]).trim();
+		const isTable = /^\s*\/\./.test(rawLines[i]);                    // un tableau /. ./ hors bloc est du contenu, même s'il est masqué
+		if (trimmed === '' && !isTable) continue;                        // lignes vides et commentaires : permis hors bloc
+		const src = isTable ? rawLines[i] : lines[i];
+		const start = src.length - src.trimStart().length;
+		if (!run) run = { line: i, start, end: isTable ? src.trimEnd().length : start + trimmed.length, count: 0, closing: trimmed === '}' };
+		run.count++;
+	}
+	flush();
+	return out.map((r) => ({
+		line: r.line, start: r.start, end: r.end,
+		message: r.count === 1 && r.closing
+			? 'Accolade fermante sans bloc titre ouvert.'
+			: `Texte hors d'un bloc titre (${r.count} ligne${r.count > 1 ? 's' : ''}) : il doit être placé dans « ${baseName}.suite { … } ».`,
+	}));
+}
+
 function blockEnd(lines, i, indent) {
 	let end = i;
 	for (let j = i + 1; j < lines.length; j++) {
@@ -318,12 +353,13 @@ function refreshDiagnostics(document) {
 	const lines = [];
 	for (let i = 0; i < document.lineCount; i++) lines.push(document.lineAt(i).text);
 	const masked = maskBlocks(lines);
-	const mk = (line, start, end, message) => {
-	const d = new vscode.Diagnostic(new vscode.Range(line, start, line, end), message, vscode.DiagnosticSeverity.Warning);
+	const mk = (line, start, end, message, severity = vscode.DiagnosticSeverity.Warning) => {
+	const d = new vscode.Diagnostic(new vscode.Range(line, start, line, end), message, severity);
 	d.source = 'note-lang';
 	return d;
 	};
 	const diags = checkTitles(masked, baseNameOf(document)).map((p) => mk(p.line, p.start, p.end, p.message));
+	checkOutsideBlocks(lines, masked, baseNameOf(document)).forEach((p) => diags.push(mk(p.line, p.start, p.end, p.message, vscode.DiagnosticSeverity.Error)));
 	if (isReady) {
 	for (const { r, res } of analyse(document)) {
 		if (!res.ambiguous) continue;
@@ -578,5 +614,5 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, _checkTitles: checkTitles, _parseStructure: parseStructure, _extractRefs: extractRefs, _norm: norm,
+module.exports = { activate, deactivate, _checkTitles: checkTitles, _checkOutsideBlocks: checkOutsideBlocks, _parseStructure: parseStructure, _extractRefs: extractRefs, _norm: norm,
 					_resolveRef: resolveRef, _chainAt: chainAt, _pathOf: pathOf, _buildTree: buildTree, _maskBlocks: maskBlocks, _parseEntities: parseEntities, _mentionContext: mentionContext, _refContext: refContext };
