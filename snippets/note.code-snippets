@@ -158,14 +158,19 @@
 		"body": "> \"${1:tâche}\"",
 		"description": "Commencé"
 	},
+	"Continuous": {
+   		"prefix": ">> en continu",
+   		"body": ">> \"${1:tâche}\"",
+   		"description": "Tâche à faire en continu"
+   	},
 	"New": {
 		"prefix": ":> nouveauté",
-		"body": ":> \"${1:info}\"",
+		"body": ":> \"${1:tâche}\"",
 		"description": "Nouveauté"
 	},
 	"Deleted": {
 		"prefix": "/> supprimé",
-		"body": "/> \"${1:info}\"",
+		"body": "/> \"${1:tâche}\"",
 		"description": "Supprimé"
 	},
 	"Table": {

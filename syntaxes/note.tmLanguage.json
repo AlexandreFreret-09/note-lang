@@ -32,6 +32,7 @@
 		{ "include": "#ignored"           },
 		{ "include": "#space-connector"   },
 		{ "include": "#done"              },
+		{ "include": "#continuous"        },
 		{ "include": "#started"           },
 		{ "include": "#new"               },
 		{ "include": "#deleted"           }
@@ -135,6 +136,22 @@
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"       },
 				{ "begin": "\"", "end":"\"", "name": "markup.changed.started.note" },
+				{ "include": "#incertain" },
+				{ "include": "#exeption"  },
+				{ "include": "#important" },
+				{ "include": "#required"  },
+				{ "include": "#dots"      }
+			]
+		},
+		
+		"continuous": {
+			"comment": ">> tache a faire en continu",
+			"begin": ">>",
+			"beginCaptures": { "0": { "name": "markup.changed.continuous.note" } },
+			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
+			"name": "markup.changed.continuous.note",
+			"patterns": [ { "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
+				{ "begin": "\"", "end": "\"", "name": "markup.changed.continuous.note"     },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },

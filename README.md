@@ -48,8 +48,11 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 /. ### ./  format particulier (tableaux ASCII)
 
 // statuts
-=> ??      terminé        > ??       commencé
-:> ??      nouveauté      /> ??      supprimé
+:> ??      nouveauté  
+> ??       commencé  
+>> ??      en continu  
+=> ??      terminé  
+/> ??      supprimé  
 
 // autres
 (??, ??)   liste     _  séparateur     ...  à venir     ..  etc
