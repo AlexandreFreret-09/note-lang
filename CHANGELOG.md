@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 1.1.1 — 2026-10-29
+
+- Correction d'un bug pour le snippet >>
+
 ## 1.1.0 — 2026-10-29
 
 - Nouveau symbole de statut `>>` : tâche à faire en continu, avec son snippet `>> en continu`.
