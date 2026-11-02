@@ -1,5 +1,10 @@
 # Journal des changements
 
+## 1.1.2 — 2026-11-02
+
+- Correction du nom />
+- Correction du rôles des structures
+
 ## 1.1.1 — 2026-10-29
 
 - Correction d'un bug pour le snippet >>
