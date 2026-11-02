@@ -151,12 +151,12 @@
 	"Done": {
 		"prefix": "=> terminé",
 		"body": "=> \"${1:tâche}\"",
-		"description": "Terminé"
+		"description": "Tâche terminé"
 	},
 	"Started": {
 		"prefix": "> commencé",
 		"body": "> \"${1:tâche}\"",
-		"description": "Commencé"
+		"description": "Tâche commencé"
 	},
 	"Continuous": {
    		"prefix": ">> en continu",
@@ -166,12 +166,12 @@
 	"New": {
 		"prefix": ":> nouveauté",
 		"body": ":> \"${1:tâche}\"",
-		"description": "Nouveauté"
+		"description": "Tâche ajouté"
 	},
-	"Deleted": {
-		"prefix": "/> supprimé",
+	"Canceled": {
+		"prefix": "/> annulé",
 		"body": "/> \"${1:tâche}\"",
-		"description": "Supprimé"
+		"description": "Tâche annulé"
 	},
 	"Table": {
 		"prefix": "/. table ./",

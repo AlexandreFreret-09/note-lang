@@ -35,7 +35,7 @@
 		{ "include": "#continuous"        },
 		{ "include": "#started"           },
 		{ "include": "#new"               },
-		{ "include": "#deleted"           }
+		{ "include": "#canceled"          }
 	],
 
 	"repository": {
@@ -174,7 +174,7 @@
 				{ "include": "#dots"      }
 			]
 		},
-		"deleted": {
+		"canceled": {
 			"begin": "/>",
 			"beginCaptures": { "0": { "name": "constant.character.note" } },
 			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
