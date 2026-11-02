@@ -18,11 +18,11 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 
 ```
 // structure
-[ n : titre ]( ... )   liste d'éléments
-< n : titre >( ... )   liste d'informations
+[ n : titre ]( ... )   bloc d'éléments
+< n : ??? >( ... )     liste de ???
 
 // éléments indépendants
-§ ??       sous-titre / contexte
+§ ???      sous-titre / contexte
 ~~ ???     info non fiable ou manquante
 
 // éléments informationnels
@@ -52,7 +52,7 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 > ??       commencé  
 >> ??      en continu  
 => ??      terminé  
-/> ??      supprimé  
+/> ??      annulé  
 
 // autres
 (??, ??)   liste     _  séparateur     ...  à venir     ..  etc
