@@ -416,7 +416,7 @@
 			"name": "markup.bold.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "markup.bold.note meta.quoted.string.note " },
+				{ "begin": "\"", "end":"\"", "name": "markup.bold.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -448,7 +448,7 @@
 		},
 
 		"ignored": {
-			"begin": "(\\|)(?:(\\|)|(?:[*&;#@§!~]|(?<![^\\s!°^~])-|\\+(?!>)|:(?!>)|=>|(?<!\\+)>|:>|/>))",
+			"begin": "(\\|)(?:(\\|)|(?:[-*&;#@§!~]|->|\\+(?!>)|:(?!>)|=>|>>|(?<!\\+)>|:>|/>))",
 			"beginCaptures": { "1": { "name": "constant.regexp.note" }, "2": { "name": "constant.regexp.note" } },
 			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
 			"name": "emphasis.lost.note",
