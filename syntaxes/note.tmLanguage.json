@@ -120,7 +120,7 @@
 			"name": "markup.inserted.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "markup.inserted.note"  },
+				{ "begin": "\"", "end":"\"", "name": "markup.inserted.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -135,7 +135,7 @@
 			"name": "markup.changed.started.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"       },
-				{ "begin": "\"", "end":"\"", "name": "markup.changed.started.note" },
+				{ "begin": "\"", "end":"\"", "name": "markup.changed.started.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -151,7 +151,7 @@
 			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
 			"name": "constant.continuous.note",
 			"patterns": [ { "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end": "\"", "name": "constant.continuous.note"     },
+				{ "begin": "\"", "end": "\"", "name": "constant.continuous.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -166,7 +166,7 @@
 			"name": "markup.bold.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "markup.bold.note"      },
+				{ "begin": "\"", "end":"\"", "name": "markup.bold.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -181,7 +181,7 @@
 			"name": "constant.character.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"   },
-				{ "begin": "\"", "end":"\"", "name": "constant.character.note" },
+				{ "begin": "\"", "end":"\"", "name": "constant.character.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -214,7 +214,7 @@
 			"name": "invalid.deprecated.unreliable.note",
 			"patterns": [
 				{ "match": "([\\(\\),_]|\\+>)", "name": "invalid.deprecated.unreliable.note" },
-				{ "begin": "\"", "end":"\"", "name": "invalid.deprecated.unreliable.note"    },
+				{ "begin": "\"", "end":"\"", "name": "invalid.deprecated.unreliable.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -231,7 +231,7 @@
 			"name": "invalid.note",
 			"patterns": [ 
 				{ "match": "([,_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "invalid.note"        },
+				{ "begin": "\"", "end":"\"", "name": "invalid.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -249,7 +249,7 @@
 			"patterns": [
 				{ "include": "#attrs" },
 				{ "match": "([,_]|\\+>)", "name": "markup.inline.raw.note"                   },
-				{ "begin": "\"", "end":"\"", "name": "entity.other.attribute-name.info.note" },
+				{ "begin": "\"", "end":"\"", "name": "entity.other.attribute-name.info.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -267,7 +267,7 @@
 			"patterns": [
 				{ "include": "#attrs" },
 				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "entity.name.type.note"     },
+				{ "begin": "\"", "end":"\"", "name": "entity.name.type.note meta.quoted.string.note"     },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -285,7 +285,7 @@
 			"patterns": [
 				{ "include": "#attrs" },
 				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"    },
-				{ "begin": "\"", "end":"\"", "name": "storage.modifier.detail.note" },
+				{ "begin": "\"", "end":"\"", "name": "storage.modifier.detail.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -303,7 +303,7 @@
 			"patterns": [
 				{ "include": "#attrs" },
 				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"    },
-				{ "begin": "\"", "end":"\"", "name": "support.function.notice.note" },
+				{ "begin": "\"", "end":"\"", "name": "support.function.notice.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -321,7 +321,7 @@
 			"patterns": [
 				{ "include": "#attrs" },
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"           },
-				{ "begin": "\"", "end":"\"", "name": "keyword.other.unit.example.note" },
+				{ "begin": "\"", "end":"\"", "name": "keyword.other.unit.example.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -337,7 +337,7 @@
 			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
 			"contentName": "constant.character.escape.note",
 			"patterns": [
-				{ "begin": "\"", "end": "\"", "name": "constant.character.escape.note" },
+				{ "begin": "\"", "end": "\"", "name": "constant.character.escape.note meta.quoted.string.note" },
 				{ "begin": "\\(", "end": "\\)", "name": "constant.character.escape.note",
 				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
 				{ "match": "\\d+|=(?!>)" },
@@ -352,7 +352,7 @@
 			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
 			"contentName": "markup.underline.exeption.note",
 			"patterns": [
-				{ "begin": "\"", "end": "\"", "name": "markup.underline.exeption.note" },
+				{ "begin": "\"", "end": "\"", "name": "markup.underline.exeption.note meta.quoted.string.note" },
 				{ "begin": "\\(", "end": "\\)", "name": "markup.underline.exeption.note",
 				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
 				{ "match": "\\d+|=(?!>)" },
@@ -367,7 +367,7 @@
 			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
 			"contentName": "strong.important.note",
 			"patterns": [
-				{ "begin": "\"", "end": "\"",	"name": "strong.important.note" },
+				{ "begin": "\"", "end": "\"",	"name": "strong.important.note meta.quoted.string.note" },
 				{ "begin": "\\(", "end": "\\)", "name": "strong.important.note",
 				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
 				{ "match": "\\d+|=(?!>)" },
@@ -383,7 +383,7 @@
 			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
 			"contentName": "emphasis.exeption.note",
 			"patterns": [
-				{ "begin": "\"", "end": "\"", "name": "emphasis.exeption.note" },
+				{ "begin": "\"", "end": "\"", "name": "emphasis.exeption.note meta.quoted.string.note" },
 				{ "begin": "\\(", "end": "\\)", "name": "emphasis.exeption.note",
 					"patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"}, { "include": "#dots" } ] },
 				{ "match": "\\d+|=(?!>)" },
@@ -399,7 +399,7 @@
 			"name": "entity.name.function.note",
 			"patterns": [
 				{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "entity.name.function.note" },
+				{ "begin": "\"", "end":"\"", "name": "entity.name.function.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -416,7 +416,7 @@
 			"name": "markup.bold.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "markup.bold.note"      },
+				{ "begin": "\"", "end":"\"", "name": "markup.bold.note meta.quoted.string.note " },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -433,7 +433,7 @@
 			"name": "entity.name.tag.status.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note"       },
-				{ "begin": "\"", "end":"\"", "name": "entity.name.tag.status.note" },
+				{ "begin": "\"", "end":"\"", "name": "entity.name.tag.status.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
@@ -453,7 +453,7 @@
 			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
 			"name": "emphasis.lost.note",
 			"patterns": [
-				{ "begin": "\"", "end":"\"", "name": "emphasis.lost.note" },
+				{ "begin": "\"", "end":"\"", "name": "emphasis.lost.note meta.quoted.string.note" },
 				{ "include": "#dots" }
 			]
 		},
