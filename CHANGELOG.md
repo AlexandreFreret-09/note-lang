@@ -1,5 +1,12 @@
 # Journal des changements
 
+## 1.1.3 — 2026-11-02
+
+### Correctifs
+- mise à jour du readme
+- bug de coloration des crochets, accolades et parenthèses entre guillemets.
+- Le symbole | ne prenait pas en compte les symboles &, =>, > et >>.
+
 ## 1.1.2 — 2026-11-02
 
 - Correction du nom />

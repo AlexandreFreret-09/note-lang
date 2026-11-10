@@ -4,14 +4,6 @@ Extension VS Code pour une notation de prise de notes inspirée du code. On écr
 
 Fichiers reconnus : `.note` et `.cours`.
 
-## Installation
-
-1. Si une ancienne version « Note Lang » est déjà installée (par *Install from Location* par exemple), **désinstalle-la d'abord**, sinon deux extensions déclarent le même langage.
-2. Dans VS Code : *Extensions* → menu `…` → **Installer à partir d'un VSIX…** → choisis `note-lang-1.0.0.vsix`.
-   En ligne de commande : `code --install-extension note-lang-1.0.0.vsix`.
-   *Autre méthode, si tu as reçu un dossier plutôt qu'un `.vsix`* : dézippe-le, puis `Ctrl+Maj+P` → **Extensions: Install from Location…** → choisis le dossier `note-lang`.
-3. Recharge la fenêtre.
-
 Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes notes (*Fichier → Ouvrir un dossier*).
 
 ## La notation en bref
