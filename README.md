@@ -35,11 +35,11 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 # ???      source (titre, [ ], < >) ou autre           (secondaire) (non composé)
 @ ???      mention d'entité (acteur, texte …) ou autre (secondaire) (non composé)
 
-// modifieurs, collés au texte (ou à un bloc : ^- !- °-)
+// modifieurs
 ~???       élément incertain
-°???       élément important
+°???       élément important   (gras)
 ^???       élément obligatoire (souligné)
-!???       exception (italique)
+!???       exception           (italique)
 
 // spéciaux
 |+ ???     élément ignoré          (| collé à un symbole, ou ||)
@@ -58,11 +58,37 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 (??, ??)   liste     _  séparateur     ...  à venir     ..  etc
 ```
 
-## Retour `+>`
+## Proriétés des symboles
 
+Les éléments primaires ne imbriquent pas (nouveau bloc).  
 Les éléments secondaires s'imbriquent dans le précédent.  
 Les éléments non composés n'imbriquent aucun élément.  
-`+>` referme le plus interne pour **reprendre l'élément d'avant** :
+
+```
+- info : définition * exemple ; détail
++------------------------------------+
+                  |
+             bloc info (-)
+```
+
+## Modifieurs
+
+Ils donnent une signification suplémentaire au text dans un bloc.  
+Ils s'ajoutent de deux façon :
+
+### Devant du texte
+Le texte modifié directement est délimité par les "," et "_".  
+Ils peuvent également être placés devant une liste "~(1,2,3)".
+
+### Devant un symbole
+Le bloc est modifié selon les règles de l'imbrication.  
+Tout élément imbiqué dans un bloc sera modifié aussi.
+
+Modifier un élément non composé ne modifira que lui-même.
+
+## Retour `+>`
+
+`+>` referme l'élément le plus interne pour **reprendre celui d'avant** :
 
 ```
 - info * exemple ; détail +> suite de l'exemple +> suite de l'info
