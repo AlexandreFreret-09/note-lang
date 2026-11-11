@@ -1,5 +1,7 @@
 const vscode = require('vscode');
 const path = require('path');
+const fs = require('fs');
+const childProcess = require('child_process');
 
 /* ======================================================================
 	STRUCTURE : titres de bloc { }, sections [ ] et groupes < >
@@ -300,6 +302,52 @@ function resolveRef(index, text, fromUri, chain) {
 	return { hits: best, ambiguous: best.length > 1 };
 }
 
+// ---------------------------------------------------------------------------------------------
+// Références vers des fichiers : un # qui ne désigne aucun titre mais un fichier existant (image, autre cours, PDF…)
+// devient un lien vers ce fichier. exists(p) -> bool et byName (nom en minuscules -> chemins) sont fournis par l'appelant.
+const FILE_EXT = /\.([\p{L}\p{N}]{1,8})$/u;
+const KNOWN_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'ppt', 'pptx', 'odp', 'zip', 'txt', 'md', 'csv', 'json', 'sql', 'note', 'cours']);
+const EXTERNAL_EXT = new Set(['pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'ppt', 'pptx', 'odp', 'zip']);   // ouverts avec l'application par défaut
+const extOf = (text) => { const m = FILE_EXT.exec(text); return m ? m[1].toLowerCase() : ''; };
+const looksLikeFile = (text) => KNOWN_EXT.has(extOf(text));
+const relRef = (fromDir, file) => path.relative(fromDir, file).split(path.sep).join('/');
+const sameFile = (a, b) => path.normalize(a).toLowerCase() === path.normalize(b).toLowerCase();
+
+// 1) à côté du fichier courant, 2) à la racine de l'espace de travail, 3) par son seul nom (s'il est unique)
+function resolveFile(text, baseDir, roots, byName, exists) {
+	if (!looksLikeFile(text)) return { files: [], ambiguous: false };
+	if (path.isAbsolute(text)) return { files: exists(text) ? [path.normalize(text)] : [], ambiguous: false };
+	for (const root of [baseDir, ...roots]) {
+		const p = path.resolve(root, text);
+		if (exists(p)) return { files: [p], ambiguous: false };
+	}
+	if (/[\\/]/.test(text)) return { files: [], ambiguous: false };          // un chemin précis : pas de recherche par le nom
+	const found = (byName.get(text.toLowerCase()) || []).filter(exists);
+	return { files: found, ambiguous: found.length > 1 };                    // plusieurs fichiers de même nom : on ne choisit pas en silence
+}
+
+// la forme la plus courte qui retombe sur ce fichier : son nom seul, sinon son chemin relatif
+function fileRef(p, baseDir, roots, byName, exists) {
+	const back = (cand) => { const r = resolveFile(cand, baseDir, roots, byName, exists); return !r.ambiguous && r.files.length === 1 && sameFile(r.files[0], p); };
+	const name = path.basename(p), rel = relRef(baseDir, p);
+	return back(name) ? name : rel;
+}
+
+// lanceurs du système, à essayer dans l'ordre, pour ouvrir un fichier avec son application par défaut (comme un double-clic).
+// On donne toujours le CHEMIN du fichier, jamais une adresse file:/// : Windows décode mal les accents d'une telle adresse (« introuvable (0x2) »).
+// Windows : 1) « cmd /c start » (méthode éprouvée, chemin entre guillemets, sans le découper), 2) PowerShell « Invoke-Item »
+// (le chemin passe par une variable d'environnement). Un % dans le nom serait interprété par cmd : on passe directement à PowerShell.
+function openersFor(platform, p) {
+	if (platform === 'win32') {
+		const list = [];
+		if (!p.includes('%')) list.push({ name: 'cmd start', cmd: 'cmd.exe', args: ['/d', '/s', '/c', 'start', '""', `"${p}"`], opts: { windowsVerbatimArguments: true } });
+		list.push({ name: 'PowerShell', cmd: 'powershell.exe', args: ['-NoProfile', '-NonInteractive', '-Command', 'Invoke-Item -LiteralPath $env:NOTELANG_FILE'], env: { NOTELANG_FILE: p }, opts: {} });
+		return list;
+	}
+	if (platform === 'darwin') return [{ name: 'open', cmd: 'open', args: [p], opts: {} }];
+	return [{ name: 'xdg-open', cmd: 'xdg-open', args: [p], opts: { detached: true, stdio: 'ignore' } }];     // xdg-open bloquerait sinon
+}
+
 function buildTree(items) {
 	const roots = [], stack = [];
 	for (const it of items) {
@@ -325,6 +373,42 @@ let isReady = false;
 let ready = Promise.resolve();
 const index = new Map();                         // uri.toString() -> { uri, items }
 
+// index des fichiers qu'un # peut viser : nom en minuscules -> chemins absolus
+const ATTACH_GLOB = `**/*.{${[...KNOWN_EXT].join(',')}}`;
+let attach = new Map();
+let attachReady = false;
+const attachKey = (p) => path.basename(p).toLowerCase();
+function attachAdd(p) { const l = attach.get(attachKey(p)) || []; if (!l.includes(p)) { l.push(p); attach.set(attachKey(p), l); } }
+function attachDrop(p) { const l = (attach.get(attachKey(p)) || []).filter((x) => x !== p); if (l.length) attach.set(attachKey(p), l); else attach.delete(attachKey(p)); }
+async function buildAttach() {
+	attach = new Map();
+	for (const u of await vscode.workspace.findFiles(ATTACH_GLOB, '**/{node_modules,.git}/**', 5000)) attachAdd(u.fsPath);
+	attachReady = true;
+}
+const wsRoots = () => (vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath);
+const fileExists = (p) => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } };
+const commandUri = (name, p) => `command:${name}?${encodeURIComponent(JSON.stringify([p]))}`;
+const openExternalUri = (p) => commandUri('noteLang.openExternal', p);
+
+// Windows : chemin court 8.3 d'un fichier (ASCII), ou null s'il n'existe pas ou si le nom contient un %.
+// Sert à passer par VS Code (qui peut passer au premier plan) sans accent dans l'adresse envoyée à Windows.
+const isAscii = (s) => /^[\x20-\x7E]*$/.test(s);
+function shortPath(p) {
+	return new Promise((resolve) => {
+		if (p.includes('%')) return resolve(null);
+		let out = '', done = false;
+		const end = (v) => { if (!done) { done = true; clearTimeout(timer); resolve(v); } };
+		const timer = setTimeout(() => { try { child.kill(); } catch (e) { /* déjà terminé */ } end(null); }, 4000);
+		let child;
+		try {
+			child = childProcess.spawn('cmd.exe', ['/d', '/s', '/c', 'for', '%I', 'in', `("${p}")`, 'do', '@echo', '%~sI'], { windowsVerbatimArguments: true, windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+			child.stdout.on('data', (d) => { out += d; });
+			child.on('error', () => end(null));
+			child.on('exit', () => { const s = out.split(/\r?\n/)[0].trim(); end(s && isAscii(s) && fileExists(s) ? s : null); });
+		} catch (e) { end(null); }
+	});
+}
+
 function reindex(uri, text) { const lines = linesOf(text); index.set(uri.toString(), { uri, items: parseStructure(lines), ents: parseEntities(lines) }); }
 
 async function buildIndex() {
@@ -343,7 +427,11 @@ function analyse(document) {
 	const items = parseStructure(lines);
 	index.set(document.uri.toString(), { uri: document.uri, items, ents: parseEntities(lines) });
 	const from = document.uri.toString();
-	return extractRefs(lines).map((r) => ({ r, res: resolveRef(index, r.text, from, chainAt(items, r.line)) }));
+	const baseDir = path.dirname(document.uri.fsPath), roots = wsRoots();
+	return extractRefs(lines).map((r) => {
+		const res = resolveRef(index, r.text, from, chainAt(items, r.line));
+		return { r, res, file: res.hits.length ? null : resolveFile(r.text, baseDir, roots, attach, fileExists) };   // un titre l'emporte sur un fichier
+	});
 }
 
 const where = (h) => `${path.basename(h.uri.fsPath)} l.${h.item.line + 1}`;
@@ -361,7 +449,12 @@ function refreshDiagnostics(document) {
 	const diags = checkTitles(masked, baseNameOf(document)).map((p) => mk(p.line, p.start, p.end, p.message));
 	checkOutsideBlocks(lines, masked, baseNameOf(document)).forEach((p) => diags.push(mk(p.line, p.start, p.end, p.message, vscode.DiagnosticSeverity.Error)));
 	if (isReady) {
-	for (const { r, res } of analyse(document)) {
+	for (const { r, res, file } of analyse(document)) {
+		if (file && looksLikeFile(r.text)) {                                  // une référence qui ressemble à un fichier
+			const dir = path.dirname(document.uri.fsPath);
+			if (file.ambiguous) { diags.push(mk(r.line, r.start, r.end, `Plusieurs fichiers portent ce nom (${file.files.slice(0, 3).map((f) => relRef(dir, f)).join(', ')}${file.files.length > 3 ? ', …' : ''}). Précise un chemin.`)); continue; }
+			if (!file.files.length && attachReady) { diags.push(mk(r.line, r.start, r.end, `Fichier introuvable : « ${r.text} » (cherché à côté de ce fichier, à la racine de l'espace de travail, puis par son nom).`)); continue; }
+		}
 		if (!res.ambiguous) continue;
 		const paths = res.hits.map((h) => pathOf(h.item));
 		const message = new Set(paths).size === paths.length
@@ -434,6 +527,22 @@ function refCompletions(document, position, ctx) {
 		items.push(ci);
 	}
 	}
+	const baseDir = path.dirname(document.uri.fsPath), roots = wsRoots();
+	for (const list of attach.values()) {
+		for (const p of list) {
+			if (sameFile(p, document.uri.fsPath)) continue;
+			const ref = fileRef(p, baseDir, roots, attach, fileExists);
+			if (ref.includes(',')) continue;                                                       // une virgule casserait la référence
+			const needQuotes = !ctx.quoted && findEnd(ref, 0) !== ref.length;                        // espace + tiret, + : … fermeraient le bloc #
+			const ci = new vscode.CompletionItem(path.basename(p), vscode.CompletionItemKind.File);
+			ci.detail = `fichier · ${relRef(baseDir, p)}`;
+			ci.sortText = 'z' + path.basename(p).toLowerCase();                                       // après les titres
+			ci.filterText = relRef(baseDir, p);
+			ci.range = range;
+			ci.insertText = (ctx.afterHash && !ctx.quoted ? ' ' : '') + (needQuotes ? `"${ref}"` : ref);
+			items.push(ci);
+		}
+	}
 	return items;
 }
 
@@ -466,6 +575,19 @@ function generateClass(className, attributes) {
 	return [`public class ${className}`, '{', ...fieldLines, '', `\tpublic ${className}(${params})`, '\t{', ...assignments, '\t}', '}'].join('\n');
 }
 
+// survol d'une référence qui désigne un fichier : son chemin, et pour les PDF/Office un lien « ouvrir avec l'application par défaut »
+function fileHover(document, position) {
+	const f = analyse(document).find(({ r }) => r.line === position.line && position.character >= r.start && position.character <= r.end);
+	if (!f || !f.file || f.file.ambiguous || !f.file.files.length) return undefined;
+	const p = f.file.files[0];
+	const md = new vscode.MarkdownString();
+	md.isTrusted = { enabledCommands: ['noteLang.openExternal', 'noteLang.reveal'] };
+	md.appendText(`${path.basename(p)} — ${relRef(path.dirname(document.uri.fsPath), p)}\n\n`);
+	if (EXTERNAL_EXT.has(extOf(p))) md.appendMarkdown(`[Ouvrir avec l'application par défaut](${openExternalUri(p)}) · [Afficher dans l'explorateur](${commandUri('noteLang.reveal', p)})`);
+	else md.appendText('Ctrl+clic pour ouvrir');
+	return new vscode.Hover(md, new vscode.Range(f.r.line, f.r.start, f.r.line, f.r.end));
+}
+
 function activate(context) {
 	const sub = (d) => context.subscriptions.push(d);
 
@@ -481,6 +603,11 @@ function activate(context) {
 	const watcher = vscode.workspace.createFileSystemWatcher('**/*.{note,cours}');
 	const fromDisk = async (uri) => { reindex(uri, Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf8')); refreshAll(); };
 	sub(watcher); sub(watcher.onDidCreate(fromDisk)); sub(watcher.onDidChange(fromDisk)); sub(watcher.onDidDelete((uri) => { index.delete(uri.toString()); refreshAll(); }));
+
+	// index des fichiers qu'un # peut viser (images, PDF, autres cours…)
+	buildAttach().then(refreshAll);
+	const attachWatcher = vscode.workspace.createFileSystemWatcher(ATTACH_GLOB);
+	sub(attachWatcher); sub(attachWatcher.onDidCreate((u) => { attachAdd(u.fsPath); refreshAll(); })); sub(attachWatcher.onDidDelete((u) => { attachDrop(u.fsPath); refreshAll(); }));
 
 	// Ctrl+clic / F12 sur une référence # : saute à la cible, ou ouvre un aperçu si plusieurs restent possibles
 	sub(vscode.languages.registerDefinitionProvider(SEL, {
@@ -508,6 +635,69 @@ function activate(context) {
 		}));
 	},
 	}));
+
+	// Ctrl+clic sur un # qui désigne un fichier : image et autres cours s'ouvrent dans VS Code, PDF/Office avec l'application par défaut
+	sub(vscode.languages.registerDocumentLinkProvider(SEL, {
+		async provideDocumentLinks(document) {
+			await ready;
+			const links = [];
+			for (const { r, res, file } of analyse(document)) {
+				if (res.hits.length || !file || file.ambiguous || !file.files.length) continue;
+				const p = file.files[0], external = EXTERNAL_EXT.has(extOf(p));
+				const link = new vscode.DocumentLink(new vscode.Range(r.line, r.start, r.line, r.end), external ? vscode.Uri.parse(openExternalUri(p)) : vscode.Uri.file(p));
+				link.tooltip = external ? "Ouvrir avec l'application par défaut" : `Ouvrir ${relRef(path.dirname(document.uri.fsPath), p)}`;
+				links.push(link);
+			}
+			return links;
+		},
+	}));
+	// ces deux commandes sont réservées aux types de documents prévus et aux fichiers qui existent : jamais un .exe, par exemple
+	const allowed = (p) => typeof p === 'string' && EXTERNAL_EXT.has(extOf(p));
+	const reveal = (p) => vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(p));
+	let channel;                                                                  // journal : Affichage > Sortie > « Note Lang »
+	const log = (m) => { if (!channel) channel = vscode.window.createOutputChannel('Note Lang'); channel.appendLine(m); };
+	sub(vscode.commands.registerCommand('noteLang.openExternal', async (p) => {
+		if (!allowed(p)) return;
+		if (!fileExists(p)) { vscode.window.showWarningMessage(`Fichier introuvable : ${p}`); return; }
+		const platform = process.platform;
+		// 1) VS Code ouvre lui-même le fichier : c'est lui qui est au premier plan, donc la fenêtre de l'application revient devant.
+		//    Windows décode mal les accents d'une adresse file:/// (« introuvable (0x2) ») : on lui donne un chemin sans accent,
+		//    c'est-à-dire le nom court 8.3 quand le nom en contient.
+		const target = platform !== 'win32' || isAscii(p) ? p : await shortPath(p);
+		if (target) {
+			log(`Ouverture de ${p} par VS Code${target === p ? '' : ' via le nom court ' + target}`);
+			await vscode.env.openExternal(vscode.Uri.file(target));
+			return;
+		}
+		// 2) pas de chemin sans accent (nom court 8.3 indisponible) : lanceurs du système, qui reçoivent le chemin tel quel
+		log(`Ouverture de ${p} : pas de nom court sans accent, on passe par le système`);
+		const launchers = openersFor(platform, p);
+		const giveUp = () => {
+			log('  aucun lanceur n\'a fonctionné : le fichier est montré dans l\'explorateur');
+			vscode.window.showWarningMessage(`Impossible d'ouvrir « ${path.basename(p)} » avec l'application par défaut : je l'affiche dans l'explorateur.`, 'Voir le détail').then((c) => { if (c && channel) channel.show(); });
+			return reveal(p);
+		};
+		const run = (i) => {
+			if (i >= launchers.length) return giveUp();
+			const l = launchers[i]; let settled = false, stderr = '';
+			const fail = (why) => {
+				if (settled) return; settled = true;
+				const err = stderr.replace(/\uFFFD/g, '?').trim();
+				log(`  ${l.name} : échec (${why})${err ? ' — ' + err.slice(0, 300) : ''}`);
+				run(i + 1);
+			};
+			log(`  essai : ${l.name}`);
+			try {
+				const child = childProcess.spawn(l.cmd, l.args, { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true, ...l.opts, env: { ...process.env, ...(l.env || {}) } });   // jamais de shell
+				if (child.stderr) child.stderr.on('data', (d) => { stderr += d; });
+				child.on('error', (e) => fail(e.message));
+				child.on('exit', (code, signal) => { if (code || signal) fail(code ? `code ${code}` : `signal ${signal}`); else if (!settled) { settled = true; log(`  ${l.name} : ok`); } });
+				child.unref();
+			} catch (e) { fail(e.message); }
+		};
+		run(0);
+	}));
+	sub(vscode.commands.registerCommand('noteLang.reveal', (p) => { if (!(allowed(p) && fileExists(p))) return; log(`Afficher dans l'explorateur : ${p}`); return reveal(p); }));
 
 	// à la frappe d'un # : toutes les cibles (titres, [ ], < >) ; d'un @ : les entités déjà déclarées (+), puis déjà mentionnées
 	sub(vscode.languages.registerCompletionItemProvider(SEL, {
@@ -563,7 +753,7 @@ function activate(context) {
 		await ready;
 		reindex(document.uri, document.getText());
 		const ent = entityAt(document, position);
-		if (!ent) return undefined;
+		if (!ent) return fileHover(document, position);
 		const { decls, mentions } = entityTargets(ent.key);
 		if (!mentions.length) return undefined;
 		const md = new vscode.MarkdownString();
@@ -614,5 +804,5 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, _checkTitles: checkTitles, _checkOutsideBlocks: checkOutsideBlocks, _parseStructure: parseStructure, _extractRefs: extractRefs, _norm: norm,
+module.exports = { activate, deactivate, _resolveFile: resolveFile, _openersFor: openersFor, _shortPath: shortPath, _isAscii: isAscii, _fileRef: fileRef, _looksLikeFile: looksLikeFile, _relRef: relRef, _checkTitles: checkTitles, _checkOutsideBlocks: checkOutsideBlocks, _parseStructure: parseStructure, _extractRefs: extractRefs, _norm: norm,
 					_resolveRef: resolveRef, _chainAt: chainAt, _pathOf: pathOf, _buildTree: buildTree, _maskBlocks: maskBlocks, _parseEntities: parseEntities, _mentionContext: mentionContext, _refContext: refContext };
