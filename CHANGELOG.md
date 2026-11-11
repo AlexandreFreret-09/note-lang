@@ -1,5 +1,14 @@
 # Journal des changements
 
+## 1.2.0 — 2026-11-11
+
+### Ajouts
+- icône de l'extention.
+- Un `#` peut viser un fichier (image, autre cours, PDF, Word, Excel, zip…) : Ctrl+clic pour l'ouvrir, complétion, avertissement si le fichier est introuvable ou en double.
+
+### Correctifs
+- coloration des crochets, accolades et parenthèses entre guillemets.
+
 ## 1.1.3 — 2026-11-02
 
 ### Correctifs

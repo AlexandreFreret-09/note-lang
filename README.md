@@ -78,7 +78,7 @@ Tout élément imbiqué dans un bloc sera modifié aussi.
 
 Modifier un élément non composé ne modifira que lui-même.
 
-## Retour `+>`
+## Retour : `+>`
 
 `+>` referme l'élément le plus interne pour **reprendre celui d'avant** :
 
@@ -119,7 +119,7 @@ nom.cours.1 {
 ```
 Le premier mot doit être **le nom du fichier sans sa dernière extension** : Un fichier `nom.cours` peut contenir `nom.cours.1 {` ou `nom {`, `Cours.1 {` donne un avertissement. Un fichier peut contenir plusieurs blocs (ex : `nom.cours.1 { … }` puis `nom.cours.2 { … }`).
 
-## Liens : `#`
+## Références : `#`
 
 Un `#` suivi du nom d'une cible devient un lien (Ctrl+clic, ou F12). Les cibles sont les titres de bloc, les `[ ]` et les `< >` de **tous** les fichiers du dossier. Un `#` qui ne correspond à aucune cible reste du texte normal (`# page 3`).
 
@@ -135,6 +135,18 @@ Un `#` suivi du nom d'une cible devient un lien (Ctrl+clic, ou F12). Les cibles 
 La recherche ignore les majuscules, les accents et le type d'apostrophe. S'il y a plusieurs cibles de même nom, c'est la plus proche de l'endroit où tu écris qui l'emporte ; si le doute reste, un aperçu liste les candidats et la référence est soulignée en avertissement avec la précision à ajouter.
 
 **Complétion** : tape `#` et la liste propose toutes les cibles, déjà écrites sous la forme la plus courte qui retombe sur la bonne.
+
+### Référencer un fichier
+
+Un `#` qui ne désigne aucun titre mais un fichier existant devient un lien (Ctrl+clic) :
+
+  - schéma # images/schema.png
+  - cours source # "docs/Cours - Triggers.pdf"
+  - suite # ../autre.cours
+
+Le fichier est cherché à côté du fichier courant, à la racine de l'espace de travail, puis par son seul nom
+(s'il est unique). Un nom avec un espace suivi d'un tiret, un `+` ou un `:` s'écrit entre guillemets. Les titres
+gardent la priorité sur les fichiers.
 
 ## Entités : `+` déclare, `@` mentionne
 
@@ -156,17 +168,17 @@ Rien ne s'affiche pour une entité déclarée que personne ne mentionne.
 
 Tape le début du symbole et choisis dans la liste :
 
-| Préfixe | Insère |
-|---|---|
-| `[titre]()`, `[n : titre]()` | bloc de structure |
-| `<titre>()`, `<n : titre>()` | bloc de liste d'informations |
-| `+ vocab`, `+ entity` | vocabulaire, entité |
-| `- info`, `- clé : valeur`, `- info ; détail`, `- info * exemple`, `- info & remarque` | informations |
-| `: définition`, `* exemple`, `& remarque`, `; détail`, `# source`, `§ contexte`, `@ mention` | éléments |
-| `-> dev`, `+>` | développement, retour à l'élément précédent |
-| `~ incertain`, `° important`, `^ obligatoire`, `! exception`, `\| ignoré`, `~~ non fiable` | modifieurs |
-| `=> terminé`, `> commencé`, `:> nouveauté`, `/> supprimé` | statuts |
-| `/. table ./` | tableau |
+| Préfixe                                                                                      | Insère                                      |
+|----------------------------------------------------------------------------------------------|---------------------------------------------|
+| `[titre]()`, `[n : titre]()`                                                                 | bloc de structure                           |
+| `<titre>()`, `<n : titre>()`                                                                 | bloc de liste d'informations                |
+| `+ vocab`, `+ entity`                                                                        | vocabulaire, entité                         |
+| `- info`, `- clé : valeur`, `- info ; détail`, `- info * exemple`, `- info & remarque`       | informations                                |
+| `: définition`, `* exemple`, `& remarque`, `; détail`, `# source`, `§ contexte`, `@ mention` | éléments                                    |
+| `-> dev`, `+>`                                                                               | développement, retour à l'élément précédent |
+| `~ incertain`, `° important`, `^ obligatoire`, `! exception`, `\| ignoré`, `~~ non fiable`   | modifieurs                                  |
+| `=> terminé`, `> commencé`, `:> nouveauté`, `/> supprimé`                                    | statuts                                     |
+| `/. table ./`                                                                                | tableau                                     |
 
 ## Réglages appliqués au langage
 
