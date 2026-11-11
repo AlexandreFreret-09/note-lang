@@ -36,6 +36,8 @@
 		}
 	},
 
+	"unbalancedBracketScopes": ["meta.quoted.string.note", "meta.preprocessor.string.note"],
+
 	"contributes": {
 		"commands": [
 			{
