@@ -25,12 +25,6 @@
 	],
 
 	"main": "./extension.js",
-	"activationEvents": [
-		"onLanguage:note",
-		"onCommand:noteLang.generateClassConstructor",
-		"onCommand:noteLang.exportMarkdown",
-    	"onCommand:noteLang.exportPdf"
-	],
 
 	"capabilities": {
 		"untrustedWorkspaces": {
