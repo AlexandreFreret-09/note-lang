@@ -140,7 +140,12 @@ function inlineRuns(raw, opts = {}) {
 	for (let i = 0; i < raw.length;) {
 		const c = raw[i];
 		if (c === Q0) { flush(); const j = raw.indexOf(Q1, i + 1), end = j < 0 ? raw.length : j; emit(raw.slice(i + 1, end), { code: isCodeLike(raw.slice(i + 1, end)) || undefined }); i = j < 0 ? raw.length : j + 1; continue; }
-		if (markers && MARKERS.has(c)) { flush(); mode = c; i++; continue; }
+		if (markers && MARKERS.has(c)) {
+			// « faire^en Java » : un marqueur collé à la fin d'un mot est une frontière (il couvre jusqu'au symbole suivant, il ne peut pas être au milieu d'un mot)
+			const before = buf || (runs.length ? runs[runs.length - 1].t : '');
+			if (/[\p{L}\p{N}.,;:!?)\]»”’%]$/u.test(before)) buf += ' ';
+			flush(); mode = c; i++; continue;
+		}
 		if (c === ',') { flush(); mode = null; buf = ','; flush(); i++; continue; }
 		if (c === '_') {
 			flush();
@@ -399,7 +404,7 @@ function mdFlat(node, depth) {
 }
 
 // une puce (ou un numéro), puis ses images, les lignes qui s'y rattachent et son développement (puces imbriquées)
-function mdBullet(item, c, depth, ctx, out) {
+function mdBullet(item, c, depth, ctx, out, level) {
 	const pad = MD_UNIT.repeat(depth), mark = c.number != null ? `${c.number}. ` : '- ', col = ' '.repeat(mark.length);
 	out.push(`${pad}${mark}${mdRuns(c.runs, ctx)}`);
 	for (const a of c.attachments) if (a.isImage) out.push(mdImage(a, ctx, pad + col));
@@ -408,29 +413,33 @@ function mdBullet(item, c, depth, ctx, out) {
 		if (ex.gapBefore) out.push(''); else out[out.length - 1] += '  ';           // saut de ligne forcé, ou paragraphe si le fichier avait une ligne vide
 		out.push(`${pad}${col}${mdRuns(ec.runs, ctx)}`);
 		for (const a of ec.attachments) if (a.isImage) out.push(mdImage(a, ctx, pad + col));
-		if (ex.children.length) mdItems(ex.children, depth + 1, ctx, out);
+		if (ex.children.length) mdItems(ex.children, depth + 1, ctx, out, level);
 	}
-	if (item.children.length) mdItems(item.children, depth + 1, ctx, out);
+	if (item.children.length) mdItems(item.children, depth + 1, ctx, out, level);
 }
 
 // contenu d'une liste < > ou d'un développement ->
-function mdItems(nodes, depth, ctx, out) {
-	let plainLast = false;
+function mdItems(nodes, depth, ctx, out, level = 3, plainStart = false) {   // level : niveau de la section qui contient la liste (ses sections internes sont des sous-titres)
+	let plainLast = plainStart;                                                // plainStart : on continue directement la ligne qui précède
 	const sep = () => { if (out.length && out[out.length - 1] !== '') out.push(''); plainLast = false; };
 	for (const n of nodes) {
 		if (n.type === 'gap') { sep(); continue; }
 		if (n.type === 'flat') { if (plainLast) sep(); out.push(...mdFlat(n, depth)); plainLast = false; continue; }   // collé à sa puce, comme dans le fichier
+		if (n.type === 'section') {                                                // une section dans une liste : un sous-titre, comme ailleurs
+			sep(); out.push(`${'#'.repeat(Math.min(6, level + 1))} ${mdRuns(headingRuns(n), ctx)}`, ''); mdBlock(n.children, level + 1, ctx, out); sep(); plainLast = false; continue;
+		}
 		if (n.type === 'list') {                                                   // une liste dans une liste : une puce (titre en gras et « : »), ses puces dessous
 			if (plainLast) sep();
 			out.push(`${MD_UNIT.repeat(depth)}- ${mdRuns(bold(listTitleRuns(n)), ctx)}`); plainLast = false;
-			mdItems(n.children, depth + 1, ctx, out); continue;
+			mdItems(n.children, depth + 1, ctx, out, level); continue;
 		}
+		if (n.type !== 'item') continue;
 		const c = composeLine(n, ctx);
-		if (isBullet(n)) { if (plainLast) sep(); mdBullet(n, c, depth, ctx, out); plainLast = false; continue; }
+		if (isBullet(n)) { if (plainLast) sep(); mdBullet(n, c, depth, ctx, out, level); plainLast = false; continue; }
 		if (plainLast) out[out.length - 1] += '  '; else sep();                  // ligne sans puce : seule, ou à la suite d'une autre (retour à la ligne forcé)
 		out.push(lineStart(mdRuns(c.runs, ctx))); plainLast = true;
 		for (const a of c.attachments) if (a.isImage) { sep(); out.push(mdImage(a, ctx, '')); }
-		if (n.children.length) { sep(); mdItems(n.children, 0, ctx, out); }
+		if (n.children.length) { sep(); mdItems(n.children, 0, ctx, out, level); }
 	}
 }
 
@@ -444,14 +453,19 @@ function mdBlock(children, level, ctx, out) {
 			sep(); out.push(`${'#'.repeat(Math.min(6, level + 1))} ${mdRuns(headingRuns(ch), ctx)}`, '');
 			mdBlock(ch.children, level + 1, ctx, out); last = 'block'; continue;
 		}
-		if (ch.type === 'list') { sep(); out.push(mdRuns(bold(listTitleRuns(ch)), ctx), ''); mdItems(ch.children, 0, ctx, out); last = 'list'; continue; }
+		if (ch.type === 'list') { sep(); out.push(mdRuns(bold(listTitleRuns(ch)), ctx), ''); mdItems(ch.children, 0, ctx, out, level); last = 'list'; continue; }
 		if (ch.type === 'flat') { sep(); out.push(...mdFlat(ch, 0)); last = 'block'; continue; }
+		if (ch.type !== 'item') continue;
 		const c = composeLine(ch, ctx);
-		if (c.number != null) { if (last !== 'list') sep(); mdBullet(ch, c, 0, ctx, out); last = 'list'; continue; }
+		if (c.number != null) { if (last !== 'list') sep(); mdBullet(ch, c, 0, ctx, out, level); last = 'list'; continue; }
 		if (last === 'plain') out[out.length - 1] += '  '; else sep();            // deux espaces en fin de ligne = retour à la ligne en Markdown
 		out.push(lineStart(mdRuns(c.runs, ctx))); last = 'plain';
 		for (const a of c.attachments) if (a.isImage) { sep(); out.push(mdImage(a, ctx, '')); last = 'block'; }
-		if (ch.children.length) { sep(); mdItems(ch.children, 0, ctx, out); last = 'list'; }
+		if (ch.children.length) {
+			const kid = ch.children[0], follows = kid.type === 'item' && !isBullet(kid);       // une remarque en retrait sous sa ligne : collée à elle, comme dans le fichier
+			if (!follows) sep();
+			mdItems(ch.children, 0, ctx, out, level, follows); last = 'list';
+		}
 	}
 }
 
@@ -515,32 +529,36 @@ const withGap = (node, on) => { if (!on) return node; const m = node.margin || [
 const oneOf = (stack) => (stack.length === 1 ? stack[0] : { stack });
 
 // texte de la ligne, ses images, les lignes qui s'y rattachent, puis son développement (puces)
-function pdfBody(item, ctx, c) {
+function pdfBody(item, ctx, c, level) {
 	const stack = [{ text: pdfRuns(c.runs, ctx), margin: [0, 0, 0, 1] }];
 	for (const a of c.attachments) if (a.isImage) stack.push(pdfImage(a, ctx));
 	for (const ex of item.extras || []) {
 		const ec = composeLine(ex, ctx);
 		stack.push({ text: pdfRuns(ec.runs, ctx), margin: [0, ex.gapBefore ? 4 : 0, 0, 1] });
 		for (const a of ec.attachments) if (a.isImage) stack.push(pdfImage(a, ctx));
-		stack.push(...pdfItems(ex.children, ctx, 0));
+		stack.push(...pdfItems(ex.children, ctx, 0, level));
 	}
-	stack.push(...pdfItems(item.children, ctx, 0));
+	stack.push(...pdfItems(item.children, ctx, 0, level));
 	return stack;
 }
 const pdfNumbered = (c, stack, ind) => ({ columns: [{ width: 20, text: `${c.number}.` }, oneOf(stack)], columnGap: 2, margin: [ind, 0, 0, 2] });
 
 // contenu d'une liste ou d'un développement : puces consécutives -> un seul `ul` ; lignes sans puce, numéros et blocs plats s'intercalent
 // ind : retrait en points de la liste
-function pdfItems(nodes, ctx, ind) {
+function pdfItems(nodes, ctx, ind, level = 3) {
 	const out = []; let ul = null, gap = false;
 	const bullet = (node) => { if (!ul) { ul = { ul: [], margin: [ind, 1, 0, 3] }; out.push(ul); } ul.ul.push(withGap(node, gap)); gap = false; };
 	for (const n of nodes) {
 		if (n.type === 'gap') { gap = true; continue; }
 		if (n.type === 'flat') { ul = null; out.push(withGap(pdfFlat(n, ctx, ind), gap)); gap = false; continue; }
-		if (n.type === 'list') {                                                   // une liste dans une liste : une puce (titre en gras et « : »), ses puces dessous
-			bullet({ stack: [{ text: pdfRuns(bold(listTitleRuns(n)), ctx), margin: [0, 0, 0, 1] }, ...pdfItems(n.children, ctx, 0)] }); continue;
+		if (n.type === 'section') {                                                // une section dans une liste : un sous-titre, comme ailleurs
+			ul = null; gap = false; out.push({ text: pdfRuns(headingRuns(n), ctx), id: n.anchor, ...H[Math.min(level + 1, 4)] }); pdfBlock(n.children, level + 1, ctx, out); continue;
 		}
-		const c = composeLine(n, ctx), stack = pdfBody(n, ctx, c);
+		if (n.type === 'list') {                                                   // une liste dans une liste : une puce (titre en gras et « : »), ses puces dessous
+			bullet({ stack: [{ text: pdfRuns(bold(listTitleRuns(n)), ctx), margin: [0, 0, 0, 1] }, ...pdfItems(n.children, ctx, 0, level)] }); continue;
+		}
+		if (n.type !== 'item') continue;
+		const c = composeLine(n, ctx), stack = pdfBody(n, ctx, c, level);
 		if (c.number != null) { ul = null; out.push(withGap(pdfNumbered(c, stack, ind), gap)); gap = false; }
 		else if (isBullet(n)) bullet(oneOf(stack));
 		else { ul = null; out.push(withGap({ ...oneOf(stack), margin: [ind + TEXT_COL, 0, 0, 2] }, gap)); gap = false; }   // ligne sans puce, alignée sur le texte des puces
@@ -559,9 +577,10 @@ function pdfBlock(children, level, ctx, out) {
 			gap = false; out.push({ text: pdfRuns(headingRuns(ch), ctx), id: ch.anchor, ...H[Math.min(level + 1, 4)] });
 			pdfBlock(ch.children, level + 1, ctx, out); continue;
 		}
-		if (ch.type === 'list') { push({ text: pdfRuns(bold(listTitleRuns(ch)), ctx), margin: [0, 4, 0, 2] }); out.push(...pdfItems(ch.children, ctx, 0)); continue; }
+		if (ch.type === 'list') { push({ text: pdfRuns(bold(listTitleRuns(ch)), ctx), margin: [0, 4, 0, 2] }); out.push(...pdfItems(ch.children, ctx, 0, level)); continue; }
 		if (ch.type === 'flat') { push(pdfFlat(ch, ctx)); continue; }
-		const c = composeLine(ch, ctx), body = pdfBody(ch, ctx, c);
+		if (ch.type !== 'item') continue;
+		const c = composeLine(ch, ctx), body = pdfBody(ch, ctx, c, level);
 		if (c.number != null) { push(pdfNumbered(c, body, 0)); continue; }
 		// ligne ordinaire : un paragraphe sans puce ; son développement vient dessous, légèrement décalé
 		const text = body.shift();
