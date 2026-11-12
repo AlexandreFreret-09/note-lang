@@ -27,7 +27,9 @@
 	"main": "./extension.js",
 	"activationEvents": [
 		"onLanguage:note",
-		"onCommand:noteLang.generateClassConstructor"
+		"onCommand:noteLang.generateClassConstructor",
+		"onCommand:noteLang.exportMarkdown",
+    	"onCommand:noteLang.exportPdf"
 	],
 
 	"capabilities": {
@@ -40,11 +42,25 @@
 
 	"contributes": {
 		"commands": [
-			{
-				"command": "noteLang.generateClassConstructor",
-				"title": "Note Lang: Générer classe + constructeur depuis une liste d'attributs"
-			}
+			{ "command": "noteLang.generateClassConstructor", "title": "Note Lang: Générer classe + constructeur depuis une liste d'attributs" },
+			{ "command": "noteLang.exportMarkdown", "title": "Note Lang: Exporter en Markdown" },
+   			{ "command": "noteLang.exportPdf", "title": "Note Lang: Exporter en PDF" }
+
 		],
+		"menus": {
+			"editor/context": [
+				{ "command": "noteLang.exportMarkdown", "when": "editorLangId == note", "group": "export@1" },
+				{ "command": "noteLang.exportPdf", "when": "editorLangId == note", "group": "export@2" }
+			],
+			"explorer/context": [
+				{ "command": "noteLang.exportMarkdown", "when": "resourceLangId == note", "group": "export@1" },
+				{ "command": "noteLang.exportPdf", "when": "resourceLangId == note", "group": "export@2" }
+			],
+			"commandPalette": [
+				{ "command": "noteLang.exportMarkdown", "when": "editorLangId == note" },
+				{ "command": "noteLang.exportPdf", "when": "editorLangId == note" }
+			]
+		},
 		"configurationDefaults": {
 			"[note]": {
 				"editor.guides.bracketPairs": true,

@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const childProcess = require('child_process');
+const EXPORT = require('./export.js');
 
 /* ======================================================================
 	STRUCTURE : titres de bloc { }, sections [ ] et groupes < >
@@ -588,6 +589,59 @@ function fileHover(document, position) {
 	return new vscode.Hover(md, new vscode.Range(f.r.line, f.r.start, f.r.line, f.r.end));
 }
 
+// ---------------------------------------------------------------------------------------------
+// Export en Markdown ou en PDF, à côté du fichier source (nom.cours -> nom.md ou nom.pdf).
+// La lecture de la notation est dans export.js ; ici on fournit ce qui touche au disque : fichiers référencés par un #, images.
+const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg']);
+let pdfLib = null;
+
+// une image n'est lue que si elle est dans le dossier du fichier ou dans l'espace de travail, qu'elle est en PNG ou JPEG et reste raisonnable
+function readImageData(p, allowedRoots) {
+	const ext = extOf(p);
+	if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg') return null;
+	const inside = allowedRoots.some((r) => { const rel = path.relative(r, p); return rel && !rel.startsWith('..') && !path.isAbsolute(rel); });
+	if (!inside) return null;
+	try {
+		if (fs.statSync(p).size > 15 * 1024 * 1024) return null;
+		return `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${fs.readFileSync(p).toString('base64')}`;
+	} catch (e) { return null; }
+}
+
+async function noteDocumentFor(arg) {
+	if (arg && arg.scheme === 'file') return vscode.workspace.openTextDocument(arg);          // clic droit : l'éditeur ou l'explorateur donne le fichier
+	const ed = vscode.window.activeTextEditor;
+	return ed && ed.document.languageId === 'note' ? ed.document : null;
+}
+
+async function exportNote(kind, arg) {
+	const doc = await noteDocumentFor(arg);
+	if (!doc || doc.isUntitled) { vscode.window.showWarningMessage("Ouvre et enregistre un fichier .note ou .cours pour l'exporter."); return; }
+	const file = doc.uri.fsPath, dir = path.dirname(file), base = path.basename(file).replace(/\.[^.]+$/, '');
+	const out = path.join(dir, base + (kind === 'pdf' ? '.pdf' : '.md')), roots = wsRoots();
+	const ctx = {
+		resolveFile: (ref) => { const r = resolveFile(ref, dir, roots, attach, fileExists); return r.files.length === 1 && !r.ambiguous ? { path: r.files[0], isImage: IMAGE_EXT.has(extOf(r.files[0])) } : null; },
+		relPath: (p) => relRef(dir, p),
+		fileUrl: (p) => vscode.Uri.file(p).toString(),
+		readImage: (p) => readImageData(p, [dir, ...roots]),
+	};
+	try {
+		const model = EXPORT.parseNotes(doc.getText(), base);
+		if (!model.blocks.some((b) => b.children.length)) { vscode.window.showWarningMessage('Rien à exporter : le fichier est vide.'); return; }
+		if (fileExists(out)) {
+			const ok = await vscode.window.showWarningMessage(`« ${path.basename(out)} » existe déjà : le remplacer ?`, { modal: true }, 'Remplacer');
+			if (ok !== 'Remplacer') return;
+		}
+		if (kind === 'pdf') {
+			pdfLib = pdfLib || require('./pdf.js').loadPdf(__dirname);
+			ctx.hasGlyph = pdfLib.hasGlyph;
+			const buf = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Note Lang : création du PDF…' }, () => pdfLib.pdfmake.createPdf(EXPORT.toPdfDoc(model, ctx)).getBuffer());
+			fs.writeFileSync(out, buf);
+		} else fs.writeFileSync(out, EXPORT.toMarkdown(model, ctx), 'utf8');
+		const choice = await vscode.window.showInformationMessage(`Exporté : ${path.basename(out)}`, 'Ouvrir');
+		if (choice === 'Ouvrir') { if (kind === 'pdf') vscode.commands.executeCommand('noteLang.openExternal', out); else vscode.window.showTextDocument(vscode.Uri.file(out)); }
+	} catch (e) { vscode.window.showErrorMessage(`Export impossible : ${e.message}`); }
+}
+
 function activate(context) {
 	const sub = (d) => context.subscriptions.push(d);
 
@@ -698,6 +752,8 @@ function activate(context) {
 		run(0);
 	}));
 	sub(vscode.commands.registerCommand('noteLang.reveal', (p) => { if (!(allowed(p) && fileExists(p))) return; log(`Afficher dans l'explorateur : ${p}`); return reveal(p); }));
+	sub(vscode.commands.registerCommand('noteLang.exportMarkdown', (arg) => exportNote('md', arg)));
+	sub(vscode.commands.registerCommand('noteLang.exportPdf', (arg) => exportNote('pdf', arg)));
 
 	// à la frappe d'un # : toutes les cibles (titres, [ ], < >) ; d'un @ : les entités déjà déclarées (+), puis déjà mentionnées
 	sub(vscode.languages.registerCompletionItemProvider(SEL, {
