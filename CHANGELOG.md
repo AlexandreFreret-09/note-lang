@@ -1,5 +1,13 @@
 # Journal des changements
 
+## 1.3.0 — 2026-11-14
+
+### Ajouts
+- Export en Markdown et en PDF (clic droit ou palette de commandes), sans programme externe. (v1)
+
+### Correctifs
+- coloration des crochets, accolades et parenthèses entre guillemets. (nouvelle correction)
+
 ## 1.2.0 — 2026-11-11
 
 ### Ajouts
