@@ -32,8 +32,6 @@
 		}
 	},
 
-	"unbalancedBracketScopes": ["meta.quoted.string.note", "meta.preprocessor.string.note"],
-
 	"contributes": {
 		"commands": [
 			{ "command": "noteLang.generateClassConstructor", "title": "Note Lang: Générer classe + constructeur depuis une liste d'attributs" },
@@ -74,7 +72,8 @@
 			{
 				"language": "note",
 				"scopeName": "source.note",
-				"path": "./syntaxes/note.tmLanguage.json"
+				"path": "./syntaxes/note.tmLanguage.json",
+				"unbalancedBracketScopes": ["meta.quoted.string.note", "meta.preprocessor.string.note", "string", "comment"]
 			}
 		],
 		"snippets": [
