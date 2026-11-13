@@ -9,8 +9,8 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 ## La notation en bref
 
 ```
-// structure
-[ n : titre ]( ... )   bloc d'éléments
+// blocs structure
+[ n : titre ]( ... )   section d'éléments
 < n : ??? >( ... )     liste de ???
 
 // éléments indépendants
@@ -107,9 +107,11 @@ Alternative sans échappement du texte :
   "— Ludwig Wittgenstein
 ```
 
-## Titres
+## Structure d'un fichier note
 
-Un bloc de premier niveau s'écrit `nomDuFichier.suite { … }`, collé à gauche, avec le `{` sur la même ligne ou sur la suivante :
+### Blocs Titre
+
+Un bloc de premier niveau s'écrit `nomDuFichier.suite { … }`, collé à gauche :
 ```
 nom.cours.1 {
 	[ 1 : Présentation ](
@@ -117,11 +119,27 @@ nom.cours.1 {
 	)
 }
 ```
-Le premier mot doit être **le nom du fichier sans sa dernière extension** : Un fichier `nom.cours` peut contenir `nom.cours.1 {` ou `nom {`, `Cours.1 {` donne un avertissement. Un fichier peut contenir plusieurs blocs (ex : `nom.cours.1 { … }` puis `nom.cours.2 { … }`).
+Le titre peut avoir autant d'extention souhaité mais le premier mot doit obligatoirement être **le nom du fichier** :  
+Un fichier `nom.cours` peut contenir un titre `nom.1 {` ou `nom.cours {`.  
+`cours.1 {` n'est pas accepté et donne un avertissement.  
+Un fichier peut contenir plusieurs blocs (ex : `nom.cours.1 { … }` puis `nom.cours.2 { … }`).
+
+Tout le texte doit se trouver dans un bloc {} : un texte placé en dehors d'un bloc titre est signalé par une **erreur**.  
+Les lignes vides et les commentaires sont permis hors bloc.
+
+### Sections, listes et sous-titres
+
+Les sections `[]` correspondent à des titre généraux et peuvent s'impriquer sur plusieurs niveaux.  
+Les listes `<>` servent a énumérer les informations sur le sujet de la liste.
+
+Une section peut contenir des listes et une liste peut contenir des sections.
+
+Le `§` sert de sous-titre ou a donner du contexte sans ajouter une nouvelle section.
 
 ## Références : `#`
 
-Un `#` suivi du nom d'une cible devient un lien (Ctrl+clic, ou F12). Les cibles sont les titres de bloc, les `[ ]` et les `< >` de **tous** les fichiers du dossier. Un `#` qui ne correspond à aucune cible reste du texte normal (`# page 3`).
+Un `#` suivi du nom d'une cible devient un lien (Ctrl+clic, ou F12). Les cibles sont les blocs titres `{}`, les `[]` et les `<>` de **tous** les fichiers du dossier.  
+Un `#` qui ne correspond à aucune cible reste du texte normal.
 
 | Tu écris | Pour atteindre |
 |---|---|
@@ -134,19 +152,23 @@ Un `#` suivi du nom d'une cible devient un lien (Ctrl+clic, ou F12). Les cibles 
 
 La recherche ignore les majuscules, les accents et le type d'apostrophe. S'il y a plusieurs cibles de même nom, c'est la plus proche de l'endroit où tu écris qui l'emporte ; si le doute reste, un aperçu liste les candidats et la référence est soulignée en avertissement avec la précision à ajouter.
 
-**Complétion** : tape `#` et la liste propose toutes les cibles, déjà écrites sous la forme la plus courte qui retombe sur la bonne.
+**Complétion** : tape `#` et la liste propose toutes les cibles, déjà écrites sous la forme la plus courte qui retombe sur la bonne.  
+Les liens, la complétion et les mentions entre fichiers demandent d'avoir ouvert le dossier.
+
+Les noms de blocs contenant une virgule ou un `/` ne sont pas proposés à la complétion.
 
 ### Référencer un fichier
 
-Un `#` qui ne désigne aucun titre mais un fichier existant devient un lien (Ctrl+clic) :
+Un `#` peut également faire référence à un fichier existant :
 
-  - schéma # images/schema.png
-  - cours source # "docs/Cours - Triggers.pdf"
-  - suite # ../autre.cours
+```
+- schéma # images/schema.png
+- cours  # docs/Cours1.pdf
+- suite  # ../autre.cours
+```
 
-Le fichier est cherché à côté du fichier courant, à la racine de l'espace de travail, puis par son seul nom
-(s'il est unique). Un nom avec un espace suivi d'un tiret, un `+` ou un `:` s'écrit entre guillemets. Les titres
-gardent la priorité sur les fichiers.
+Le fichier est cherché à côté du fichier courant, à la racine de l'espace de travail, puis par son seul nom s'il est unique dans le dossier.  
+N'oubliez pas d'échapper le texte si le nom contient des symboles (`-`, `+`, `:`).
 
 ## Entités : `+` déclare, `@` mentionne
 
@@ -163,6 +185,15 @@ Rien ne s'affiche pour une entité déclarée que personne ne mentionne.
 
 - **Plan du fichier** (panneau *Outline*, fil d'Ariane, `Ctrl+Maj+O`) : titres, `[ ]` et `< >`, en arbre.
 - **`Ctrl+T`** : aller à un titre, un `[ ]` ou un `< >` dans tous les fichiers.
+
+## Exporter en Markdown ou en PDF
+ 
+Clic droit sur un fichier `.note` ou `.cours` (dans l'éditeur ou dans l'explorateur), ou `Ctrl+Maj+P` :
+ 
+- **Note Lang: Exporter en Markdown** crée `nom.md` à côté du fichier ;
+- **Note Lang: Exporter en PDF** crée `nom.pdf`.
+ 
+Si le fichier existe déjà, l'extension demande avant de le remplacer. Le PDF est fabriqué par l'extension elle-même.
 
 ## Snippets
 
@@ -191,6 +222,6 @@ Deux réglages utiles à connaître :
 
 ## Limites connues
 
-- Les liens, la complétion et les mentions entre fichiers demandent d'avoir ouvert le dossier.
-- Les noms de blocs contenant une virgule ou un `/` ne sont pas proposés à la complétion.
+
+
 - Le contenu des tableaux `/. ./` et des commentaires `/* */` est ignoré pour les liens et les entités.
