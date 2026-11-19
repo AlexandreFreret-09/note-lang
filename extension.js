@@ -365,6 +365,95 @@ function buildTree(items) {
 	====================================================================== */
 
 const baseNameOf = (document) => path.parse(document.fileName).name;
+// ---------------------------------------------------------------------------------------------
+// Survol des symboles : la description d'un symbole de la notation quand la souris passe dessus.
+// Mêmes règles que la grammaire : rien entre guillemets, dans un commentaire ou dans un bloc plat ; un « - » collé à un mot n'est pas une info.
+const SYMBOL_DESC = {
+	block:     ['bloc titre', 'Tout le texte d\'un fichier se trouve dans un bloc « nomDuFichier.suite { … } ».'],
+	section:   ['titre de section', '`[ n : titre ]( … )` : section d\'éléments'],
+	titlesep:  ['séparateur du titre', 'Sépare le numéro du titre : `[ 1 : Introduction ]`.'],
+	list:      ['liste', '`< titre >( … )` : une liste de choses, chaque élément cité en est une.'],
+	close:     ['fin de section ou de liste', 'Referme le `[ ]( … )` ou le `< >( … )` ouvert.'],
+	info:      ['info', ''],
+	numbered:  ['liste numérotée', '`1 - texte`, `2 - texte`…'],
+	term:      ['vocabulaire / entité', 'Terme déclaré ; on y renvoie ailleurs avec `@`.'],
+	def:       ['définition', ''],
+	detail:    ['détail', 'Précision sur ce qui précède.'],
+	example:   ['exemple', ''],
+	notice:    ['remarque', ''],
+	source:    ['source / lien', 'Vers un titre, une liste ou un fichier : Ctrl+clic pour y aller.'],
+	mention:   ['mention d\'entité', 'Renvoie à un terme déclaré avec `+`.'],
+	context:   ['contexte / sous-titre', ''],
+	unreliable:['info non fiable', 'À vérifier.'],
+	uncertain: ['incertain', 'Jusqu\'au symbole suivant, ou seulement le groupe `"…"` ou `( … )` collé au symbole.'],
+	important: ['important', 'Jusqu\'au symbole suivant, ou seulement le groupe `"…"` ou `( … )` collé au symbole.'],
+	required:  ['obligatoire', 'Jusqu\'au symbole suivant, ou seulement le groupe `"…"` ou `( … )` collé au symbole.'],
+	exception: ['exception', 'Jusqu\'au symbole suivant, ou seulement le groupe `"…"` ou `( … )` collé au symbole.'],
+	done:      ['statut : terminé', ''],
+	started:   ['statut : commencé', ''],
+	continuous:['statut : en continu', 'Tâche à faire régulièrement.'],
+	new:       ['statut : nouveauté', ''],
+	canceled:  ['statut : annulé', ''],
+	dev:       ['développement', 'Les lignes en retrait en dessous développent cet élément.'],
+	back:      ['retour', 'Referme l\'élément en cours et reprend le précédent.'],
+	etc:       ['etc.', ''],
+	more:      ['à compléter', ''],
+	link:      ['liaison', 'Relie deux parties d\'une phrase (un tiret « – » à l\'export).'],
+	ignored:   ['ignoré', 'L\'élément qui suit est ignoré (barré à l\'export).'],
+	flat:      ['format plat', 'Le texte entre `/.` et `./` est recopié tel quel (tableaux, code).'],
+};
+const TWO = [['...', 'more'], ['..', 'etc'], ['~~', 'unreliable'], ['=>', 'done'], [':>', 'new'], ['/>', 'canceled'], ['>>', 'continuous'], ['->', 'dev'], ['+>', 'back']];
+const ONE = { '>': 'started', '+': 'term', ':': 'def', ';': 'detail', '*': 'example', '&': 'notice', '#': 'source', '@': 'mention', '§': 'context', '~': 'uncertain', '°': 'important', '^': 'required', '!': 'exception' };
+const IGNORABLE = /^(\|\||->|-|\+(?!>)|:(?!>)|=>|>>|>|:>|\/>|[*&;#@§!~])/;
+
+// symboles d'une ligne : masked = ligne masquée (blocs plats, /* */ remplacés par des espaces), raw = ligne d'origine
+// -> [{ start, end, key, inner }]   inner : pour « | », la description de l'élément ignoré
+function listSymbols(masked, raw) {
+	const out = [], m = masked, lead = m.length - m.trimStart().length, body = m.trim();
+	const push = (start, len, key, inner) => out.push({ start, end: start + len, key, inner });
+	// lignes de structure
+	if (lead === 0 && /^[^\W\d][\w.-]*\s*\{\s*$/u.test(body)) { push(m.indexOf('{'), 1, 'block'); return out; }
+	if (body === '{' || (lead === 0 && body === '}')) { push(lead, 1, 'block'); return out; }
+	if (body === ')' || body === '}') { push(lead, 1, 'close'); return out; }
+	let s;
+	if ((s = /^\[[^\]]*\]\s*[({]$/.exec(body))) {
+		push(lead, 1, 'section'); push(lead + body.indexOf(']'), 1, 'section');
+		const c = body.indexOf(':'); if (c > 0 && c < body.indexOf(']')) push(lead + c, 1, 'titlesep');
+		return out;
+	}
+	if ((s = /^<[^>]*>\s*[({]$/.exec(body))) { push(lead, 1, 'list'); push(lead + body.lastIndexOf('>'), 1, 'list'); return out; }
+	for (let i = 0; i < m.length;) {
+		const c = m[i];
+		if (c === '"') { const j = m.indexOf('"', i + 1); i = j < 0 ? m.length : j + 1; continue; }
+		if (m.startsWith('//', i)) break;
+		if (c === ' ' && raw && (raw.startsWith('/.', i) || raw.startsWith('./', i))) { push(i, 2, 'flat'); i += 2; continue; }
+		const two = TWO.find(([sym]) => m.startsWith(sym, i));
+		if (two) { push(i, two[0].length, two[1]); i += two[0].length; continue; }
+		if (c === '|') {
+			const x = IGNORABLE.exec(m.slice(i + 1));
+			if (x) {
+				const sym = x[1], k = sym === '||' ? null : (TWO.find(([y]) => y === sym) || [null, sym === '-' ? 'info' : ONE[sym]])[1];
+				push(i, 1 + sym.length, 'ignored', k); i += 1 + sym.length; continue;
+			}
+			i++; continue;
+		}
+		if (c === '-') {
+			if (i === 0 || /[\s!°^~]/.test(m[i - 1])) push(i, 1, /^\d+$/.test(m.slice(0, i).trim()) ? 'numbered' : 'info');
+			i++; continue;
+		}
+		if (c === '_') { if (/\s/.test(m[i - 1] || '') && /\s/.test(m[i + 1] || '')) push(i, 1, 'link'); i++; continue; }
+		if (ONE[c]) { push(i, 1, ONE[c]); i++; continue; }
+		i++;
+	}
+	return out;
+}
+
+// le symbole sous la souris (ch = position dans la ligne), ou null
+function symbolAt(masked, raw, ch) {
+	const list = listSymbols(masked, raw);
+	return list.find((x) => ch >= x.start && ch < x.end) || list.find((x) => ch === x.end && x.end === x.start + 1) || null;
+}
+
 const linesOf = (text) => maskBlocks(text.replace(/\r/g, '').split('\n'));
 const SEL = { language: 'note' };
 const KINDS = () => ({ title: vscode.SymbolKind.Namespace, section: vscode.SymbolKind.Module, group: vscode.SymbolKind.Object });
@@ -642,6 +731,81 @@ async function exportNote(kind, arg) {
 	} catch (e) { vscode.window.showErrorMessage(`Export impossible : ${e.message}`); }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Couleurs : réglage « noteLang.colors » = « theme » (celles du thème de VS Code) ou « fixed » (la palette de Note Lang, la même avec tous les thèmes).
+// Une extension ne peut pas changer un thème : en mode « fixed », elle écrit ses règles dans editor.tokenColorCustomizations (réglages utilisateur).
+// Ses règles portent un nom qui commence par COLOR_TAG : elles sont retirées en repassant à « theme », sans toucher aux règles de l'utilisateur.
+// Elles ne visent que des scopes en « .note » : aucun autre langage n'est touché.
+const COLOR_TAG = 'Note Lang · ';
+const FIXED_COLORS = [
+	{"name": "Note Lang · Titre de bloc (fichier)", "scope": "markup.inserted.title.note", "settings": {"foreground": "#7d74dc", "fontStyle": "bold"}},
+	{"name": "Note Lang · Titre de section [ ]", "scope": "entity.name.section.note", "settings": {"foreground": "#7d74dc", "fontStyle": ""}},
+	{"name": "Note Lang · Étiquette d'un titre (I, 1, A)", "scope": "markup.heading.note", "settings": {"foreground": "#7d74dc", "fontStyle": "bold"}},
+	{"name": "Note Lang · Crochets, chevrons, points de titre", "scope": "keyword.symbol.begin.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Crochet fermant", "scope": "keyword.symbol.end.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Point d'un titre", "scope": "keyword.symbol.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Deux-points (opérateur)", "scope": "keyword.operator.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Symbole égal", "scope": "keyword.operator.equality.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Définition et titre < >", "scope": "entity.name.type.note", "settings": {"foreground": "#248f81", "fontStyle": ""}},
+	{"name": "Note Lang · Marqueur - et +", "scope": "keyword.control.info.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Texte d'une info (-)", "scope": "entity.other.attribute-name.info.note", "settings": {"foreground": "#5082d3", "fontStyle": ""}},
+	{"name": "Note Lang · Terme de vocabulaire (+)", "scope": "invalid.note", "settings": {"foreground": "#2b8bab", "fontStyle": ""}},
+	{"name": "Note Lang · Marqueur ;", "scope": "keyword.control.detail.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Texte d'un détail (;)", "scope": "storage.modifier.detail.note", "settings": {"foreground": "#a168d9", "fontStyle": ""}},
+	{"name": "Note Lang · Exemple (*)", "scope": "keyword.other.unit.example.note", "settings": {"foreground": "#259340", "fontStyle": ""}},
+	{"name": "Note Lang · Remarque (&)", "scope": "support.function.notice.note", "settings": {"foreground": "#b86e2e", "fontStyle": ""}},
+	{"name": "Note Lang · Source (#)", "scope": "entity.name.function.note", "settings": {"foreground": "#978026", "fontStyle": ""}},
+	{"name": "Note Lang · Contexte (§) et nouveauté (:>)", "scope": "markup.bold.note", "settings": {"foreground": "#d043d0", "fontStyle": "bold"}},
+	{"name": "Note Lang · Info non fiable (~~)", "scope": "invalid.deprecated.unreliable.note", "settings": {"foreground": "#d35b50", "fontStyle": "italic"}},
+	{"name": "Note Lang · Incertain (~)", "scope": "constant.character.escape.note", "settings": {"foreground": "#d45489", "fontStyle": ""}},
+	{"name": "Note Lang · Symbole ° (important)", "scope": "header.important.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Symbole ^ (obligatoire)", "scope": "header.exeption.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Symbole ! (exception)", "scope": "markup.bold.exeption.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Texte important", "scope": "strong.important.note", "settings": {"fontStyle": "bold"}},
+	{"name": "Note Lang · Texte obligatoire", "scope": "markup.underline.exeption.note", "settings": {"fontStyle": "underline"}},
+	{"name": "Note Lang · Texte en exception", "scope": "emphasis.exeption.note", "settings": {"fontStyle": "italic"}},
+	{"name": "Note Lang · Élément ignoré", "scope": "emphasis.lost.note", "settings": {"foreground": "#828282", "fontStyle": "italic"}},
+	{"name": "Note Lang · Marqueurs | et /. ./", "scope": "constant.regexp.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Terminé (=>)", "scope": "markup.inserted.note", "settings": {"foreground": "#499325", "fontStyle": ""}},
+	{"name": "Note Lang · Commencé (>)", "scope": "markup.changed.started.note", "settings": {"foreground": "#718b23", "fontStyle": ""}},
+	{"name": "Note Lang · Supprimé (/>)", "scope": "constant.character.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Mention (@)", "scope": "entity.name.tag.status.note", "settings": {"foreground": "#2b8bab", "fontStyle": ""}},
+	{"name": "Note Lang · Ponctuation (, ( ) _ +>)", "scope": "markup.inline.raw.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Virgule isolée", "scope": "string.interpolated.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Développement et référence (->)", "scope": "keyword.control.reference.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Etc (..)", "scope": "keyword.control.note", "settings": {"foreground": "#828282", "fontStyle": ""}},
+	{"name": "Note Lang · Nombre entier", "scope": "constant.numeric.integer.note", "settings": {"foreground": "#718b23", "fontStyle": ""}},
+	{"name": "Note Lang · Nombre décimal", "scope": "constant.numeric.float.note", "settings": {"foreground": "#718b23", "fontStyle": ""}},
+	{"name": "Note Lang · Texte entre guillemets", "scope": "string.quoted.double.note", "settings": {"foreground": "#978026", "fontStyle": ""}},
+	{"name": "Note Lang · Statut en continu (>>)", "scope": "constant.continuous.note", "settings": {"foreground": "#718b23"}},
+	{"name": "Note Lang · Commentaire //", "scope": "comment.line.double-slash.note", "settings": {"foreground": "#828282", "fontStyle": "italic"}},
+	{"name": "Note Lang · Commentaire /* */", "scope": "comment.block.note", "settings": {"foreground": "#828282", "fontStyle": "italic"}},
+	{"name": "Note Lang · Format plat /. ./", "scope": "meta.preprocessor.string.note", "settings": {"foreground": "#828282", "fontStyle": ""}}
+];
+const isOurRule = (r) => r && typeof r.name === 'string' && r.name.startsWith(COLOR_TAG);
+
+// nouvelle valeur de editor.tokenColorCustomizations (null = rien à changer, undefined = retirer le réglage)
+function colorSettingsFor(mode, current) {
+	const cur = current && typeof current === 'object' ? current : {};
+	const rules = Array.isArray(cur.textMateRules) ? cur.textMateRules : [];
+	const mine = rules.filter((r) => !isOurRule(r));
+	const next = mode === 'fixed' ? [...FIXED_COLORS, ...mine] : mine;      // les règles de l'utilisateur viennent après : elles l'emportent
+	if (JSON.stringify(next) === JSON.stringify(rules)) return null;
+	const value = { ...cur };
+	if (next.length) value.textMateRules = next; else delete value.textMateRules;
+	return Object.keys(value).length ? value : undefined;
+}
+
+async function applyColors() {
+	const mode = vscode.workspace.getConfiguration('noteLang').get('colors', 'theme');
+	const editor = vscode.workspace.getConfiguration('editor');
+	const info = editor.inspect('tokenColorCustomizations');
+	const value = colorSettingsFor(mode, info ? info.globalValue : undefined);
+	if (value === null) return;
+	try { await editor.update('tokenColorCustomizations', value, vscode.ConfigurationTarget.Global); }
+	catch (e) { vscode.window.showWarningMessage(`Note Lang : impossible de changer les couleurs (${e.message}).`); }
+}
+
 function activate(context) {
 	const sub = (d) => context.subscriptions.push(d);
 
@@ -803,6 +967,26 @@ function activate(context) {
 	},
 	}));
 
+	// couleurs : thème de VS Code ou palette fixe (réglage noteLang.colors)
+	applyColors();
+	sub(vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('noteLang.colors')) applyColors(); }));
+
+	// survol d'un symbole de la notation : sa description
+	sub(vscode.languages.registerHoverProvider(SEL, {
+		provideHover(document, position) {
+			const raw = document.lineAt(position.line).text;
+			const masked = linesOf(document.getText())[position.line] || '';
+			const s = symbolAt(masked, raw, position.character);
+			if (!s) return undefined;
+			const [label, detail] = SYMBOL_DESC[s.key];
+			const md = new vscode.MarkdownString();
+			md.appendMarkdown(`**\`${raw.slice(s.start, s.end)}\`** ${label}`);
+			if (s.inner && SYMBOL_DESC[s.inner]) md.appendMarkdown(` (ici : ${SYMBOL_DESC[s.inner][0]})`);
+			if (detail) md.appendMarkdown(`\n\n${detail}`);
+			return new vscode.Hover(md, new vscode.Range(position.line, s.start, position.line, s.end));
+		},
+	}));
+
 	// survol d'une entité : définition + où elle est mentionnée
 	sub(vscode.languages.registerHoverProvider(SEL, {
 	async provideHover(document, position) {
@@ -860,5 +1044,5 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, _resolveFile: resolveFile, _openersFor: openersFor, _shortPath: shortPath, _isAscii: isAscii, _fileRef: fileRef, _looksLikeFile: looksLikeFile, _relRef: relRef, _checkTitles: checkTitles, _checkOutsideBlocks: checkOutsideBlocks, _parseStructure: parseStructure, _extractRefs: extractRefs, _norm: norm,
+module.exports = { activate, deactivate, _colorSettingsFor: colorSettingsFor, _FIXED_COLORS: FIXED_COLORS, _symbolAt: symbolAt, _listSymbols: listSymbols, _maskBlocks2: maskBlocks, _resolveFile: resolveFile, _openersFor: openersFor, _shortPath: shortPath, _isAscii: isAscii, _fileRef: fileRef, _looksLikeFile: looksLikeFile, _relRef: relRef, _checkTitles: checkTitles, _checkOutsideBlocks: checkOutsideBlocks, _parseStructure: parseStructure, _extractRefs: extractRefs, _norm: norm,
 					_resolveRef: resolveRef, _chainAt: chainAt, _pathOf: pathOf, _buildTree: buildTree, _maskBlocks: maskBlocks, _parseEntities: parseEntities, _mentionContext: mentionContext, _refContext: refContext };

@@ -76,6 +76,21 @@
 				"unbalancedBracketScopes": ["meta.quoted.string.note", "meta.preprocessor.string.note", "string", "comment"]
 			}
 		],
+		"configuration": {
+			"title": "Note Lang",
+			"properties": {
+				"noteLang.colors": {
+					"type": "string",
+					"enum": ["theme", "fixed"],
+					"enumDescriptions": [
+						"Couleurs du thème de VS Code : elles changent avec le thème.",
+						"Couleurs fixes de Note Lang : les mêmes avec tous les thèmes."
+					],
+					"default": "theme",
+					"markdownDescription": "Couleurs de la notation. En mode **fixed**, Note Lang ajoute ses règles à `editor.tokenColorCustomizations` (réglages utilisateur) ; en repassant à **theme**, il les retire."
+				}
+			}
+		},
 		"snippets": [
 			{
 				"language": "note",
