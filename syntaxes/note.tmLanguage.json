@@ -331,63 +331,150 @@
 		},
 
 		"incertain": {
-			"begin": "~",
-			"beginCaptures": { "0": { "name": "constant.character.escape.note" } },
-			"end": "(?<!~)\\s*(\\+>)|(?<!~)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
-			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
-			"contentName": "constant.character.escape.note",
+			"comment": "un groupe \"...\" ou ( ... ) colle au marqueur se referme avec lui : le +> qui suit referme alors l'element. Sinon, le marqueur couvre jusqu'au symbole suivant.",
 			"patterns": [
-				{ "begin": "\"", "end": "\"", "name": "constant.character.escape.note meta.quoted.string.note" },
-				{ "begin": "\\(", "end": "\\)", "name": "constant.character.escape.note",
-				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
-				{ "match": "\\d+|=(?!>)" },
-				{ "include": "$self" }
+				{
+					"begin": "(~)(\")",
+					"beginCaptures": { "1": { "name": "constant.character.escape.note" }, "2": { "name": "constant.character.escape.note meta.quoted.string.note" } },
+					"end": "\"",
+					"endCaptures": { "0": { "name": "constant.character.escape.note meta.quoted.string.note" } },
+					"contentName": "constant.character.escape.note meta.quoted.string.note"
+				},
+				{
+					"begin": "(~)(\\()",
+					"beginCaptures": { "1": { "name": "constant.character.escape.note" }, "2": { "name": "constant.character.escape.note" } },
+					"end": "\\)",
+					"endCaptures": { "0": { "name": "constant.character.escape.note" } },
+					"contentName": "constant.character.escape.note",
+					"patterns": [ 
+						{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
+						{ "include": "#dots" }
+					]
+				},
+				{
+					"begin": "~",
+					"beginCaptures": { "0": { "name": "constant.character.escape.note" } },
+					"end": "(?<!~)\\s*(?=\\+>|[:*;§@|#<\\[&!°^~,]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+					"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
+					"contentName": "constant.character.escape.note",
+					"patterns": [
+						{ "begin": "\"", "end": "\"", "name": "constant.character.escape.note meta.quoted.string.note" },
+						{ "begin": "\\(", "end": "\\)", "name": "constant.character.escape.note",
+						  "patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+						{ "match": "\\d+|=(?!>)" },
+						{ "include": "$self" }
+					]
+				}
 			]
 		},
 
 		"required": {
-			"begin": "\\^",
-			"beginCaptures": { "0": { "name": "header.exeption.note" } },
-			"end": "(?<!\\^)\\s*(\\+>)|(?<!\\^)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
-			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
-			"contentName": "markup.underline.exeption.note",
+			"comment": "un groupe \"...\" ou ( ... ) colle au marqueur se referme avec lui : le +> qui suit referme alors l'element. Sinon, le marqueur couvre jusqu'au symbole suivant.",
 			"patterns": [
-				{ "begin": "\"", "end": "\"", "name": "markup.underline.exeption.note meta.quoted.string.note" },
-				{ "begin": "\\(", "end": "\\)", "name": "markup.underline.exeption.note",
-				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
-				{ "match": "\\d+|=(?!>)" },
-				{ "include": "$self" }
+				{
+					"begin": "(\\^)(\")",
+					"beginCaptures": { "1": { "name": "header.exeption.note" }, "2": { "name": "markup.underline.exeption.note meta.quoted.string.note" } },
+					"end": "\"",
+					"endCaptures": { "0": { "name": "markup.underline.exeption.note meta.quoted.string.note" } },
+					"contentName": "markup.underline.exeption.note meta.quoted.string.note"
+				},
+				{
+					"begin": "(\\^)(\\()",
+					"beginCaptures": { "1": { "name": "header.exeption.note" }, "2": { "name": "markup.underline.exeption.note" } },
+					"end": "\\)",
+					"endCaptures": { "0": { "name": "markup.underline.exeption.note" } },
+					"contentName": "markup.underline.exeption.note",
+					"patterns": [
+						{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
+						{ "include": "#dots" }
+					]
+				},
+				{
+					"begin": "\\^",
+					"beginCaptures": { "0": { "name": "header.exeption.note" } },
+					"end": "(?<!\\^)\\s*(?=\\+>|[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+					"contentName": "markup.underline.exeption.note",
+					"patterns": [
+						{ "begin": "\"", "end": "\"", "name": "markup.underline.exeption.note meta.quoted.string.note" },
+						{ "begin": "\\(", "end": "\\)", "name": "markup.underline.exeption.note",
+						"patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+						{ "match": "\\d+|=(?!>)" },
+						{ "include": "$self" } ]
+				}
 			]
 		},
 
 		"important": {
-			"begin": "°",
-			"beginCaptures": { "0": { "name": "header.important.note" } },
-			"end": "(?<!°)\\s*(\\+>)|(?<!°)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
-			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
-			"contentName": "strong.important.note",
+			"comment": "un groupe \"...\" ou ( ... ) colle au marqueur se referme avec lui : le +> qui suit referme alors l'element. Sinon, le marqueur couvre jusqu'au symbole suivant.",
 			"patterns": [
-				{ "begin": "\"", "end": "\"",	"name": "strong.important.note meta.quoted.string.note" },
-				{ "begin": "\\(", "end": "\\)", "name": "strong.important.note",
-				  "patterns": [	{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
-				{ "match": "\\d+|=(?!>)" },
-				{ "include": "$self" }
+				{
+					"begin": "(°)(\")",
+					"beginCaptures": { "1": { "name": "header.important.note" }, "2": { "name": "strong.important.note meta.quoted.string.note" } },
+					"end": "\"",
+					"endCaptures": { "0": { "name": "strong.important.note meta.quoted.string.note" } },
+					"contentName": "strong.important.note meta.quoted.string.note"
+				},
+				{
+					"begin": "(°)(\\()",
+					"beginCaptures": { "1": { "name": "header.important.note" }, "2": { "name": "strong.important.note" } },
+					"end": "\\)",
+					"endCaptures": { "0": { "name": "strong.important.note" } },
+					"contentName": "strong.important.note",
+					"patterns": [
+						{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
+						{ "include": "#dots" }
+					]
+				},
+				{
+					"begin": "°",
+					"beginCaptures": { "0": { "name": "header.important.note" } },
+					"end": "(?<!°)\\s*(?=\\+>|[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+					"contentName": "strong.important.note",
+					"patterns": [
+						{ "begin": "\"", "end": "\"", "name": "strong.important.note meta.quoted.string.note" },
+						{ "begin": "\\(", "end": "\\)", "name": "strong.important.note", 
+						"patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+						{ "match": "\\d+|=(?!>)" },
+						{ "include": "$self" }
+					]
+				}
 			]
 		},
 		
-		"exeption": {
-			"comment": "! au debut italicise tout ce qui suit jusqu'a fin de ligne, en gardant les couleurs des symboles imbriques (#, -, +, etc.)",
-			"begin": "!",
-			"beginCaptures": { "0": { "name": "markup.bold.exeption.note" } },
-			"end": "(?<!!)\\s*(\\+>)|(?<!!)\\s*(?=[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
-			"endCaptures": { "1": { "name": "markup.inline.raw.note" } },
-			"contentName": "emphasis.exeption.note",
+		 "exeption": {
+			"comment": "un groupe \"...\" ou ( ... ) colle au marqueur se referme avec lui : le +> qui suit referme alors l'element. Sinon, le marqueur couvre jusqu'au symbole suivant.",
 			"patterns": [
-				{ "begin": "\"", "end": "\"", "name": "emphasis.exeption.note meta.quoted.string.note" },
-				{ "begin": "\\(", "end": "\\)", "name": "emphasis.exeption.note",
-					"patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note"}, { "include": "#dots" } ] },
-				{ "match": "\\d+|=(?!>)" },
-				{ "include": "$self" }
+				{
+					"begin": "(!)(\")",
+					"beginCaptures": { "1": { "name": "markup.bold.exeption.note" }, "2": { "name": "emphasis.exeption.note meta.quoted.string.note" } },
+					"end": "\"",
+					"endCaptures": { "0": { "name": "emphasis.exeption.note meta.quoted.string.note" } },
+					"contentName": "emphasis.exeption.note meta.quoted.string.note"
+				},
+				{
+					"begin": "(!)(\\()",
+					"beginCaptures": { "1": { "name": "markup.bold.exeption.note" }, "2": { "name": "emphasis.exeption.note" } },
+					"end": "\\)",
+					"endCaptures": { "0": { "name": "emphasis.exeption.note" } },
+					"contentName": "emphasis.exeption.note",
+					"patterns": [
+						{ "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" },
+						{ "include": "#dots" }
+					]
+				},
+				{
+					"begin": "!",
+					"beginCaptures": { "0": { "name": "markup.bold.exeption.note" } },
+					"end": "(?<!!)\\s*(?=\\+>|[:*;§@|#<\\[&!°^~,_]|(?<![^\\s!°^~])-|\\+(?!>)|(?<!\\+)>|=>|/>|//|~~)|\\s*$",
+					"contentName": "emphasis.exeption.note",
+					"patterns": [
+						{ "begin": "\"", "end": "\"", "name": "emphasis.exeption.note meta.quoted.string.note" },
+						{ "begin": "\\(", "end": "\\)", "name": "emphasis.exeption.note",
+						"patterns": [ { "match": "([\\(\\),_]|\\+>)", "name": "markup.inline.raw.note" }, { "include": "#dots" } ] },
+						{ "match": "\\d+|=(?!>)" },
+						{ "include": "$self" }
+					]
+				}
 			]
 		},
 

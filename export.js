@@ -134,17 +134,24 @@ const isCodeLike = (t) => /\S/.test(t) && (!/[\p{L}\p{N}]/u.test(t) || /[*&|<>[\
 // texte d'un élément -> morceaux { t, b, i, u, s, code, q } : ° gras, ^ souligné, ! italique, ~ incertain (jusqu'au symbole suivant)
 function inlineRuns(raw, opts = {}) {
 	const markers = opts.markers !== false;
-	const runs = []; let mode = null, buf = '';
+	const runs = []; let mode = null, buf = '', groupOnly = false;     // groupOnly : le marqueur ne couvre que le groupe "…" qui le suit
 	const emit = (t, extra) => { if (t) runs.push({ t, b: mode === '°', u: mode === '^', i: mode === '!', q: mode === '~', ...extra }); };
 	const flush = () => { emit(buf); buf = ''; };
 	for (let i = 0; i < raw.length;) {
 		const c = raw[i];
-		if (c === Q0) { flush(); const j = raw.indexOf(Q1, i + 1), end = j < 0 ? raw.length : j; emit(raw.slice(i + 1, end), { code: isCodeLike(raw.slice(i + 1, end)) || undefined }); i = j < 0 ? raw.length : j + 1; continue; }
+		if (c === Q0) { flush(); const j = raw.indexOf(Q1, i + 1), end = j < 0 ? raw.length : j; emit(raw.slice(i + 1, end), { code: isCodeLike(raw.slice(i + 1, end)) || undefined }); i = j < 0 ? raw.length : j + 1; if (groupOnly) { mode = null; groupOnly = false; } continue; }
 		if (markers && MARKERS.has(c)) {
 			// « faire^en Java » : un marqueur collé à la fin d'un mot est une frontière (il couvre jusqu'au symbole suivant, il ne peut pas être au milieu d'un mot)
 			const before = buf || (runs.length ? runs[runs.length - 1].t : '');
 			if (/[\p{L}\p{N}.,;:!?)\]»”’%]$/u.test(before)) buf += ' ';
-			flush(); mode = c; i++; continue;
+			flush(); mode = c; i++;
+			// un groupe collé au marqueur (^"…" ou ^( … )) se referme avec lui, comme dans l'éditeur
+			if (raw[i] === Q0) groupOnly = true;
+			else if (raw[i] === '(') {
+				const j = raw.indexOf(')', i + 1);
+				if (j > 0) { emit(raw.slice(i, j + 1)); mode = null; i = j + 1; }
+			}
+			continue;
 		}
 		if (c === ',') { flush(); mode = null; buf = ','; flush(); i++; continue; }
 		if (c === '_') {
