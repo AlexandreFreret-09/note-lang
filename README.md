@@ -52,7 +52,7 @@ Pour les liens d'un fichier à l'autre, ouvre le **dossier** qui contient tes no
 
 ## Proriétés des symboles
 
-Les éléments primaires ne imbriquent pas (nouveau bloc).  
+Les éléments primaires ne s'imbriquent pas (nouveau bloc).  
 Les éléments secondaires s'imbriquent dans le précédent.  
 Les éléments non composés n'imbriquent aucun élément.  
 
