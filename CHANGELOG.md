@@ -1,5 +1,14 @@
 # Journal des changements
 
+## 1.4.0 — 2026-11-19
+
+### Ajouts
+- Réglage « Note Lang: Colors » : couleurs du thème ou couleurs fixes.
+- Pop up de description des symboles
+
+### Correctifs
+- bug des modifieurss avec le retour `+>`
+
 ## 1.3.0 — 2026-11-14
 
 ### Ajouts
