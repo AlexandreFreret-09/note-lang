@@ -103,8 +103,8 @@
 	"Development block": {
 		"prefix": "-> dev",
 		"body": [
-			"${1:Label} ->",
-			"\t- \"${2:développement}\""
+			"->",
+			"\t- \"${1:développement}\""
 		],
 		"description": "Label suivi de son développement indenté"
 	},
