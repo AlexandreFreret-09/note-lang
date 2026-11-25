@@ -161,12 +161,12 @@
 		},
 		"new": {
 			"begin": ":>",
-			"beginCaptures": { "0": { "name": "markup.bold.note" } },
+			"beginCaptures": { "0": { "name": "keyword.operator.note" } },
 			"end": "(?=[:*;§@|#<\\[&]|(?<![^\\s!°^~])-|(\\+)(?!>)|(?<!\\+)>|=>|/>|//|~~|$)",
-			"name": "markup.bold.note",
+			"name": "keyword.operator.note",
 			"patterns": [
 				{ "match": "([(),_]|\\+>)", "name": "markup.inline.raw.note" },
-				{ "begin": "\"", "end":"\"", "name": "markup.bold.note meta.quoted.string.note" },
+				{ "begin": "\"", "end":"\"", "name": "keyword.operator.note meta.quoted.string.note" },
 				{ "include": "#incertain" },
 				{ "include": "#exeption"  },
 				{ "include": "#important" },
