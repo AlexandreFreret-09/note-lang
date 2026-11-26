@@ -1,5 +1,10 @@
 # Journal des changements
 
+## 1.4.1 — 2026-11-26
+
+### Correctifs
+- modifieur non appliqué sur `:>`
+
 ## 1.4.0 — 2026-11-19
 
 ### Ajouts
